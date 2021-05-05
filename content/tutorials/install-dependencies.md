@@ -2,6 +2,7 @@
 title: "Install Dependencies"
 date: 2021-05-04T16:35:56+08:00
 draft: false
+weight: 1
 ---
 
 ## 一、安装gRPC依赖
@@ -124,9 +125,9 @@ draft: false
               artifact = 'io.grpc:protoc-gen-grpc-java:1.4.0'
           }
       }
-  
+
       generatedFilesBaseDir = "src"
-  
+
       generateProtoTasks {
           all()*.plugins {
               grpc {

@@ -2,6 +2,7 @@
 title: "Build Rpc Cluster"
 date: 2021-05-04T16:44:58+08:00
 draft: false
+weight: 2
 ---
 
 # 构建ToadOCR RPC服务集群

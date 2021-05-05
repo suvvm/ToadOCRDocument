@@ -2,6 +2,7 @@
 title: "Getting start"
 description: "ToadOCR分为两个部分，Preprocessor与OCREngine"
 featured_image: ''
+weight: 1
 ---
 # 获取ToadOCR
 
