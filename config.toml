@@ -5,7 +5,7 @@ theme = "hugo-theme-techdoc"
 #themesDir = "../.."
 #resourceDir = "../resources"
 
-DefaultContentLanguage = "zh-CN"
+#DefaultContentLanguage = "en-us"
 SectionPagesMenu = "main"
 Paginate = 3 # this is set low for demonstrating with dummy content. Set to a higher number
 googleAnalytics = ""
