@@ -77,7 +77,7 @@ draft: false
 
 ​	首先，计算样本绘制的二维图像的中心点 ，即针对对应坐标轴所代表的每个样本的属性值求和后除以样本数量。
 $$
-m_x = \frac{\sum_{S=1}^nA_{1i}}{n} \\ m_y = \frac{\sum_{S=1}^nA_{2i}}{n}
+m_x = \frac{\sum_{S=1}^nA_{1i}}{n} \\\\ m_y = \frac{\sum_{S=1}^nA_{2i}}{n}
 $$
 
 
@@ -122,14 +122,14 @@ $$
 
 ##### PCA拟合直线
 
-我们将输入数据  $ \left( \begin{array} {ccc} 4.17 & 5.17 & 2.17 & -2.83 & -3.83 & -4.83  \\  2.37 & 0.37 & 1.37 & -0.63 & -0.83 & -2.63 \end{array} \right) $  记为矩阵P
+我们将输入数据  $ \left( \begin{array} {ccc} 4.17 & 5.17 & 2.17 & -2.83 & -3.83 & -4.83  \\\\  2.37 & 0.37 & 1.37 & -0.63 & -0.83 & -2.63 \end{array} \right) $  记为矩阵P
 
-因为直线过原点只需考虑计算直线斜率，那么如果知道了直线的单位法向量$ \vec n(n_1, n_2) $   ，对于任意样本点 $ (x_s, y_s) $ 该点的坐标向量与直线法向量  的内积正好等于该点到直线的距离(同向为正, 反向为负)，即 
+因为直线过原点只需考虑计算直线斜率，那么如果知道了直线的单位法向量$ \vec n(n_1, n_2) $   ，对于任意样本点 $ (x_s, y_s) $ 该点的坐标向量与直线法向量  的内积正好等于该点到直线的距离(同向为正, 反向为负)，即
 $$
 d_s =  \left(
 \begin{array}
 {ccc}
-x_s\\
+x_s\\\\
 y_s
 \end{array}
 \right) \cdot \vec n
@@ -140,11 +140,11 @@ $$
 
 得到新的公式
 $$
-SS_d = \sum_{s=1}^n \left|\left( \begin{array} {ccc} x_s \\ y_s \end{array} \right) \cdot \vec n \right|^2 = \sum_{s=1}^n \vec n^T \left( \begin{array} {ccc} x_s \\ y_s \end{array} \right) （\begin{array} {ccc} x_s & y_s \end{array}）\vec n = \vec n^T \sum_{s=1}^n \left( \begin{array} {ccc} x_s \\ y_s \end{array} \right) （\begin{array} {ccc} x_s & y_s \end{array}）\vec n
+SS_d = \sum_{s=1}^n \left|\left( \begin{array} {ccc} x_s \\\\ y_s \end{array} \right) \cdot \vec n \right|^2 = \sum_{s=1}^n \vec n^T \left( \begin{array} {ccc} x_s \\\\ y_s \end{array} \right) （\begin{array} {ccc} x_s & y_s \end{array}）\vec n = \vec n^T \sum_{s=1}^n \left( \begin{array} {ccc} x_s \\\\ y_s \end{array} \right) （\begin{array} {ccc} x_s & y_s \end{array}）\vec n
 $$
 
 
-其中 $ \sum_{s=1}^n \left( \begin{array} {ccc} x_s \\ y_s \end{array} \right) （\begin{array} {ccc} x_s & y_s \end{array}）= PP^T $   所以 $ SS_d = \vec n^TPP^T\vec n $  而 $ \frac{1}{n - 1}  PP^T $ 就是原始数据的协方差矩阵。 
+其中 $ \sum_{s=1}^n \left( \begin{array} {ccc} x_s \\\\ y_s \end{array} \right) （\begin{array} {ccc} x_s & y_s \end{array}）= PP^T $   所以 $ SS_d = \vec n^TPP^T\vec n $  而 $ \frac{1}{n - 1}  PP^T $ 就是原始数据的协方差矩阵。
 
 
 
@@ -179,11 +179,11 @@ V = \vec v_1 \vec v_2
 $$
 而
 $$
-\Sigma = \left( \begin{array} {ccc} \sigma_1 & 0 \\ 0 & \sigma_2 \end{array} \right)
+\Sigma = \left( \begin{array} {ccc} \sigma_1 & 0 \\\\ 0 & \sigma_2 \end{array} \right)
 $$
 
 $$
-\Sigma \Sigma = \left( \begin{array} {ccc} \lambda_1 & 0 \\ 0 & \lambda_2 \end{array} \right)
+\Sigma \Sigma = \left( \begin{array} {ccc} \lambda_1 & 0 \\\\ 0 & \lambda_2 \end{array} \right)
 $$
 
 所以
@@ -194,12 +194,12 @@ $$
 
 得到了直线的法向量，便可以获得直线的斜率
 $$
-PP^T = \left( \begin{array} {ccc} 4.17 & 5.17 & 2.17 & -2.83 & -3.83 & -4.83  \\  2.37 & 0.37 & 1.37 & -0.63 & -0.83 & -2.63 \end{array} \right)
-\left( \begin{array} {ccc} 2.37 & 4.17 \\ 0.37 & 5.17 \\ 1.37 & 2.17 \\ -0.63 & -2.83 \\ -0.83 & -3.83 \\ -2.63 & -4.83 \end{array} \right) =\left( \begin{array} {ccc} 32.43 & 94.83 \\ 15.63 & 32.43 \end{array} \right)
+PP^T = \left( \begin{array} {ccc} 4.17 & 5.17 & 2.17 & -2.83 & -3.83 & -4.83  \\\\  2.37 & 0.37 & 1.37 & -0.63 & -0.83 & -2.63 \end{array} \right)
+\left( \begin{array} {ccc} 2.37 & 4.17 \\\\ 0.37 & 5.17 \\\\ 1.37 & 2.17 \\\\ -0.63 & -2.83 \\\\ -0.83 & -3.83 \\\\ -2.63 & -4.83 \end{array} \right) =\left( \begin{array} {ccc} 32.43 & 94.83 \\\\ 15.63 & 32.43 \end{array} \right)
 $$
 
 $$
-\lambda_1 = 65.52 对应特征向量 = \left( \begin{array} {ccc} 2.64 \\ 1 \end{array} \right)  \qquad \lambda_2 = -0.66 对应特征向量 = \left( \begin{array} {ccc} -2.64 \\ 1 \end{array} \right)
+\lambda_1 = 65.52 对应特征向量 = \left( \begin{array} {ccc} 2.64 \\\\ 1 \end{array} \right)  \qquad \lambda_2 = -0.66 对应特征向量 = \left( \begin{array} {ccc} -2.64 \\\\ 1 \end{array} \right)
 $$
 
 所以斜率为0.264
@@ -216,16 +216,16 @@ $$
 
 ​	首先对a和b求偏导：
 $$
-\frac{\sigma}{\sigma a}\sum_{s=1}^n\frac{(ax_s + by_s)^2}{a^2 + b^2} \\ 
-= \sum_{s=1}^n\frac{2x_s(ax_s + by_s)(a^2 + b^2) - 2a(ax_s + by_s)^2}{(a^2 + b^2)^2}\\ 
-= \sum_{s=1}^n\frac{2x_s^2a^3 + 2bx_sy_sa^2 + 2x_s^2ab^2 + 2b^3x_sy_s - 2a^3x_s^2 - 4a^2bx_sy_s - 2ab^2y_s^2}{a^4 + 2a^2b^2 + b^4} \\ 
+\frac{\sigma}{\sigma a}\sum_{s=1}^n\frac{(ax_s + by_s)^2}{a^2 + b^2} \\\\
+= \sum_{s=1}^n\frac{2x_s(ax_s + by_s)(a^2 + b^2) - 2a(ax_s + by_s)^2}{(a^2 + b^2)^2}\\\\
+= \sum_{s=1}^n\frac{2x_s^2a^3 + 2bx_sy_sa^2 + 2x_s^2ab^2 + 2b^3x_sy_s - 2a^3x_s^2 - 4a^2bx_sy_s - 2ab^2y_s^2}{a^4 + 2a^2b^2 + b^4} \\\\
 = \sum_{s=1}^n\frac{-2bx_sy_s a^2 + 2b^2(x_s^2 - y_s^2)a + 2b^3x_sy_s}{a^4 + 2a^2b^2 + b^4}
 $$
 
 $$
-\frac{\sigma}{\sigma b}\sum_{s=1}^n\frac{(ax_s + by_s)^2}{a^2 + b^2} \\ 
-= \sum_{s=1}^n\frac{2y_s(ax_s + by_s)(a^2 + b^2) - 2b(ax_s + by_s)^2}{(a^2 + b^2)^2} \\ 
-= \sum_{s=1}^n\frac{2a^3x_sy_s + 2a^2y_s^2b + 2ax_sy_sb^2 + 2y_s^2b^3 - 2a^2x_s^2b - 4ax_sy_sb^2 - 2y_s^2b^3}{a^4 + 2a^2b^2 + b^4} \\ 
+\frac{\sigma}{\sigma b}\sum_{s=1}^n\frac{(ax_s + by_s)^2}{a^2 + b^2} \\\\
+= \sum_{s=1}^n\frac{2y_s(ax_s + by_s)(a^2 + b^2) - 2b(ax_s + by_s)^2}{(a^2 + b^2)^2} \\\\
+= \sum_{s=1}^n\frac{2a^3x_sy_s + 2a^2y_s^2b + 2ax_sy_sb^2 + 2y_s^2b^3 - 2a^2x_s^2b - 4ax_sy_sb^2 - 2y_s^2b^3}{a^4 + 2a^2b^2 + b^4} \\\\
 = \sum_{s=1}^n\frac{-2ax_sy_sb^2 + 2a^2(y_s^2 - x_s^2)b + 2a^3x_sy_s}{a^4 + 2a^2b^2 + b^4}
 $$
 
@@ -234,7 +234,7 @@ $$
 得到下方方程组
 $$
 \begin{cases}
-\sum_{s=1}^n\frac{-2ax_sy_sb^2 + 2a^2(y_s^2 - x_s^2)b + 2a^3x_sy_s}{a^4 + 2a^2b^2 + b^4} = 0 \\ 
+\sum_{s=1}^n\frac{-2ax_sy_sb^2 + 2a^2(y_s^2 - x_s^2)b + 2a^3x_sy_s}{a^4 + 2a^2b^2 + b^4} = 0 \\\\
 \sum_{s=1}^n\frac{-2bx_sy_s a^2 + 2b^2(x_s^2 - y_s^2)a + 2b^3x_sy_s}{a^4 + 2a^2b^2 + b^4} = 0
 \end{cases}
 $$
@@ -270,29 +270,29 @@ xy共轭，无法根据将上述方程组得到a与b的表达式，所以无法�
 | **Attr2** | 0.74     | -1.49    | 0.51     | 0.41     | 0.58     | -0.75    |
 
 $$
-SS_{dpc1} = \sum_{S'=1}^nd_{a1S'}^2 \\ 
-					= 4.74^2 + 4.97^2 + 2.51^2 + (-2.87)^2 + (-3.88)^2 + (-5.45)^2 \\ 
-					= 106.46 \\ 
-SS_{dpc1} = \sum_{S'=1}^nd_{a2S'}^2 \\ 
-					= 0.74^2 + (-1.49)^2 + 0.51^2 + 0.41^2 + 0.58^2 + (-0.75)^2 \\ 
+SS_{dpc1} = \sum_{S'=1}^nd_{a1S'}^2 \\\\
+					= 4.74^2 + 4.97^2 + 2.51^2 + (-2.87)^2 + (-3.88)^2 + (-5.45)^2 \\\\
+					= 106.46 \\\\
+SS_{dpc1} = \sum_{S'=1}^nd_{a2S'}^2 \\\\
+					= 0.74^2 + (-1.49)^2 + 0.51^2 + 0.41^2 + 0.58^2 + (-0.75)^2 \\\\
 					= 4.09
 $$
 
 可以用上方的平方和除以样本点数量减一获得PC1与PC2围绕原点的的差异
 $$
-V_{PC1} = \frac{SS_{dpc1}}{6 - 1} = \frac{93.25}{5} = 21.29 \\ 
+V_{PC1} = \frac{SS_{dpc1}}{6 - 1} = \frac{93.25}{5} = 21.29 \\\\
 V_{PC1} = \frac{SS_{dpc2}}{6 - 1} = \frac{4.05}{5} = 0.82
 $$
 最终通过计算得到碎石图所需数值
 $$
-PC1 = \frac{18.65}{18.65 + 0.81} = 0.962 = 96.2\% \\  
-PC2 = \frac{18.65}{18.65 + 0.81} = 0.038 = 3.8\% \\
+PC1 = \frac{18.65}{18.65 + 0.81} = 0.962 = 96.2\% \\\\
+PC2 = \frac{18.65}{18.65 + 0.81} = 0.038 = 3.8\% \\\\
 $$
 
 
 ![img](/images/PCA_13.png)
 
-可以发现PC1可以96.2%的表示特征数据，可以使用PC1作为主轴将上述数据降低为一维矩阵 
+可以发现PC1可以96.2%的表示特征数据，可以使用PC1作为主轴将上述数据降低为一维矩阵
 
 ### 三、ZCA白化
 
