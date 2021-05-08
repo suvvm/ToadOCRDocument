@@ -153,10 +153,60 @@ weight: 1
 - gRPC工具protobuf protoc
 
   ```sh
-  python -m pip install grpcio-tools
+  $ python -m pip install grpcio-tools
   ```
 
-## 二、安装Ectd
+## 二、Etcd Client v3
 
-​	ToadOCR提供了修改过的ETCD安装脚本和启动脚本，可以在[项目仓库](https://github.com/suvvm/ToadOCREngine/blob/master/resources/script/etcd_install.sh)获取
+ToadOCR与Etcd的交互使用官方提供的etcd v3客户端包。
+
+```sh
+$ go get -u -v go.etcd.io/etcd/clientv3
+```
+
+​	但是当前etcd v3客户端的开发相对grpc略有滞后，且社区开发人员毫无干劲，积攒了巨量的issue没有处理，且对v3.5的发布日期来回扯皮详见https://github.com/etcd-io/etcd/issues/12330，所以当前clientv3对应相对稳定的gRPC版本为v1.26.0，若使用当前v1.3x.x会出现调用移除方法和generate代码变量名称不匹配的情况，需要手动对源码进行修改，得不偿失，所以可以考虑在go mod依赖管理中将gRPC版本限制为v1.26.0
+
+```
+replace (
+	google.golang.org/grpc => google.golang.org/grpc v1.26.0
+)
+```
+
+## 三、Gorgonia
+
+​	ToadOCR为了方便进行数学运算，使用了gorgonia的张量与语法数学表达式图（可重用节点的AST）
+
+```sh
+$ go get gorgonia.org/gorgonia
+```
+
+## 四、GoCV
+
+​	GoCV为[OpenCV 4](http://opencv.org/)计算机视觉库提供了Go语言绑定。GoCV软件包在Linux，macOS和Windows上支持Go和OpenCV v4.5.1的最新版本。在获取GoCV前请确保已经完成了OpenCV相关配置。
+
+```sh
+$ go get -u -d gocv.io/x/gocv
+```
+
+#### 快速安装OpenCV4
+
+以下命令应执行所有操作，以在Linux上下载并安装OpenCV 4.5.2：
+
+```sh
+$ cd $GOPATH/src/gocv.io/x/gocv
+$ make install
+```
+
+### 验证安装
+
+```sh
+$ go run ./cmd/version/main.go
+```
+
+输出
+
+```
+gocv version: 0.27.0
+opencv lib version: 4.5.2
+```
 

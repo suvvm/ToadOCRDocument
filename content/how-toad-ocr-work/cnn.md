@@ -1,10 +1,8 @@
 ---
-title: "Cnn"
+title: "卷积神经网络 Convolutional Neural Network"
 date: 2021-05-07T17:57:23+08:00
 draft: false
 ---
-
-# 卷积神经网络 Convolutional Neural Network
 
 ​	ToadOCREngine 使用两种神经网络完成手写体字符集识别，本章对卷积神经网络的实现进行介绍
 

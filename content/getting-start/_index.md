@@ -1,5 +1,5 @@
 ---
-title: "Getting start"
+title: "快速开始"
 description: "ToadOCR分为两个部分，Preprocessor与OCREngine"
 featured_image: ''
 weight: 1

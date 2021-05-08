@@ -1,5 +1,5 @@
 ---
-title: "About"
+title: "关于"
 description: "截止到当前Toad OCR已经完成在亚洲、欧洲和北美洲的服务器部署，Toad OCR的开发仍在持续进行"
 featured_image: ''
 weight: 3

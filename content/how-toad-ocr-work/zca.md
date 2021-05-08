@@ -1,10 +1,8 @@
 ---
-title: "Zca"
+title: "对图像进行ZCA白化"
 date: 2021-05-07T17:57:33+08:00
 draft: false
 ---
-
-# ToadOCR对图像进行ZCA白化
 
 ## 一、理论讲解
 
