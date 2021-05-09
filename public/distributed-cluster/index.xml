@@ -2,61 +2,61 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>分布式集群 on Toad OCR</title>
-    <link>https://example.com/distributed-cluster/</link>
+    <link>http://http://vjp.suvvm.work/distributed-cluster/</link>
     <description>Recent content in 分布式集群 on Toad OCR</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Sat, 08 May 2021 15:46:21 +0800</lastBuildDate><atom:link href="https://example.com/distributed-cluster/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 08 May 2021 15:46:21 +0800</lastBuildDate><atom:link href="http://http://vjp.suvvm.work/distributed-cluster/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Etcd gRPC 服务注册与服务发现</title>
-      <link>https://example.com/distributed-cluster/etcd-register-resolver/</link>
+      <link>http://http://vjp.suvvm.work/distributed-cluster/etcd-register-resolver/</link>
       <pubDate>Sat, 08 May 2021 21:16:00 +0800</pubDate>
       
-      <guid>https://example.com/distributed-cluster/etcd-register-resolver/</guid>
+      <guid>http://http://vjp.suvvm.work/distributed-cluster/etcd-register-resolver/</guid>
       <description>Etcd gRPC 服务注册与服务发现 Etcd gRPC Register Resolver 本章主要介绍了ToadOCR中gRPC使用Etcd集群做负载均衡，服务注册与服务发现逻辑。 零、理论介绍 ​ 在开始</description>
     </item>
     
     <item>
       <title>集群搭建</title>
-      <link>https://example.com/distributed-cluster/cluster-construction/</link>
+      <link>http://http://vjp.suvvm.work/distributed-cluster/cluster-construction/</link>
       <pubDate>Sat, 08 May 2021 16:58:17 +0800</pubDate>
       
-      <guid>https://example.com/distributed-cluster/cluster-construction/</guid>
+      <guid>http://http://vjp.suvvm.work/distributed-cluster/cluster-construction/</guid>
       <description>集群搭建 Cluster Construction ​ 本章主要表述将多个服务器构建为一个分布式集群的方法。 ToadOCR分布式集群使用ETCD进行搭建。所有操作的前提是完成本章目录</description>
     </item>
     
     <item>
       <title>图像预处理服务部署</title>
-      <link>https://example.com/distributed-cluster/toad-ocr-preprocessor-server/</link>
+      <link>http://http://vjp.suvvm.work/distributed-cluster/toad-ocr-preprocessor-server/</link>
       <pubDate>Sat, 08 May 2021 16:55:24 +0800</pubDate>
       
-      <guid>https://example.com/distributed-cluster/toad-ocr-preprocessor-server/</guid>
+      <guid>http://http://vjp.suvvm.work/distributed-cluster/toad-ocr-preprocessor-server/</guid>
       <description>图像预处理服务部署 Toad Ocr Preprocessor Server 本章主要表述将Toad OCR Processor 图像处理module添加为集群中的RPC服务的方法。 ToadOCR分布式集群使用ETCD</description>
     </item>
     
     <item>
       <title>OCR识别服务节点部署</title>
-      <link>https://example.com/distributed-cluster/toad-ocr-engine-server/</link>
+      <link>http://http://vjp.suvvm.work/distributed-cluster/toad-ocr-engine-server/</link>
       <pubDate>Sat, 08 May 2021 16:55:13 +0800</pubDate>
       
-      <guid>https://example.com/distributed-cluster/toad-ocr-engine-server/</guid>
+      <guid>http://http://vjp.suvvm.work/distributed-cluster/toad-ocr-engine-server/</guid>
       <description>OCR识别服务节点部署 Toad Ocr Engine Server 本章主要表述将Toad OCR Engine 图像识别添加为集群中的RPC服务的方法。 ToadOCR分布式集群使用ETCD进行搭建</description>
     </item>
     
     <item>
       <title>中国大陆服务器代理</title>
-      <link>https://example.com/distributed-cluster/proxy-china/</link>
+      <link>http://http://vjp.suvvm.work/distributed-cluster/proxy-china/</link>
       <pubDate>Sat, 08 May 2021 16:54:21 +0800</pubDate>
       
-      <guid>https://example.com/distributed-cluster/proxy-china/</guid>
+      <guid>http://http://vjp.suvvm.work/distributed-cluster/proxy-china/</guid>
       <description>中国大陆服务器代理 Proxy China ​ ⚠️警告，本项目代理只用于访问受阻断依赖。经由本文章所导致的一切法律责任有读者个人负责！ 一、为什么需要代理 ​ 大陆的开</description>
     </item>
     
     <item>
       <title>服务器环境搭建</title>
-      <link>https://example.com/distributed-cluster/environment-construction/</link>
+      <link>http://http://vjp.suvvm.work/distributed-cluster/environment-construction/</link>
       <pubDate>Sat, 08 May 2021 16:53:51 +0800</pubDate>
       
-      <guid>https://example.com/distributed-cluster/environment-construction/</guid>
+      <guid>http://http://vjp.suvvm.work/distributed-cluster/environment-construction/</guid>
       <description>服务器环境搭建 Environment Construction ​ 本章主要介绍搭建集群与部署节点前的环境搭建步骤 该部分等待@郭一完善 一、Install ECTD 1、Ubnutu\Debian $ sudo</description>
     </item>
     

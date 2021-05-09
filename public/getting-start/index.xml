@@ -2,34 +2,34 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>快速开始 on Toad OCR</title>
-    <link>https://example.com/getting-start/</link>
+    <link>http://http://vjp.suvvm.work/getting-start/</link>
     <description>Recent content in 快速开始 on Toad OCR</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Sun, 09 May 2021 13:18:41 +0800</lastBuildDate><atom:link href="https://example.com/getting-start/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 09 May 2021 13:18:41 +0800</lastBuildDate><atom:link href="http://http://vjp.suvvm.work/getting-start/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>使用Toad OCR http客户端</title>
-      <link>https://example.com/getting-start/use-http-client/</link>
+      <link>http://http://vjp.suvvm.work/getting-start/use-http-client/</link>
       <pubDate>Sun, 09 May 2021 13:18:41 +0800</pubDate>
       
-      <guid>https://example.com/getting-start/use-http-client/</guid>
+      <guid>http://http://vjp.suvvm.work/getting-start/use-http-client/</guid>
       <description>使用Toad OCR http客户端 Use Http Client 等待@樊庆威补充</description>
     </item>
     
     <item>
       <title>为开源文档做贡献</title>
-      <link>https://example.com/getting-start/contribut-doc/</link>
+      <link>http://http://vjp.suvvm.work/getting-start/contribut-doc/</link>
       <pubDate>Fri, 07 May 2021 16:30:32 +0800</pubDate>
       
-      <guid>https://example.com/getting-start/contribut-doc/</guid>
+      <guid>http://http://vjp.suvvm.work/getting-start/contribut-doc/</guid>
       <description>为开源文档做贡献 Contribut The Document 开始为开源文档做贡献 ​ 如果您想开始为ToadOCR文档做贡献，此页面及其相关主题可以帮助您开始使用。您无需成为开发人员</description>
     </item>
     
     <item>
       <title>标签对照</title>
-      <link>https://example.com/getting-start/tags-map/</link>
+      <link>http://http://vjp.suvvm.work/getting-start/tags-map/</link>
       <pubDate>Fri, 07 May 2021 16:12:51 +0800</pubDate>
       
-      <guid>https://example.com/getting-start/tags-map/</guid>
+      <guid>http://http://vjp.suvvm.work/getting-start/tags-map/</guid>
       <description>标签对照 Tags Mapping ​ 此页面包含各种定义和词汇表，可以帮助你了解ToadOCR并与开发团队进行交流(通过github pull request 或 issues) 字符标签对照 resp tag ascii character 0 48</description>
     </item>
     

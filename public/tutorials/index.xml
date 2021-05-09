@@ -2,25 +2,25 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>使用讲解 on Toad OCR</title>
-    <link>https://example.com/tutorials/</link>
+    <link>http://http://vjp.suvvm.work/tutorials/</link>
     <description>Recent content in 使用讲解 on Toad OCR</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Tue, 04 May 2021 16:47:05 +0800</lastBuildDate><atom:link href="https://example.com/tutorials/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 04 May 2021 16:47:05 +0800</lastBuildDate><atom:link href="http://http://vjp.suvvm.work/tutorials/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>服务器环境搭建</title>
-      <link>https://example.com/tutorials/install-dependencies/</link>
+      <link>http://http://vjp.suvvm.work/tutorials/install-dependencies/</link>
       <pubDate>Tue, 04 May 2021 16:35:56 +0800</pubDate>
       
-      <guid>https://example.com/tutorials/install-dependencies/</guid>
+      <guid>http://http://vjp.suvvm.work/tutorials/install-dependencies/</guid>
       <description>服务器环境搭建 Install Dependencies 一、安装gRPC依赖 1、go 拥有Go三个最新发行版中的任何一个，有关安装说明请参考Go Getting Start 指导。 拥有可以使用的protob</description>
     </item>
     
     <item>
       <title>使用RPC客户端</title>
-      <link>https://example.com/tutorials/use-client/</link>
+      <link>http://http://vjp.suvvm.work/tutorials/use-client/</link>
       <pubDate>Tue, 04 May 2021 16:36:37 +0800</pubDate>
       
-      <guid>https://example.com/tutorials/use-client/</guid>
+      <guid>http://http://vjp.suvvm.work/tutorials/use-client/</guid>
       <description>使用RPC客户端 Use RPC Client ​ 本章是在完成依赖安装的前提下进行操作 go 1、在项目下创建目录 创建go package rpc 以存放全部rpc客户端 $ mkdir rpc 创建目录toad_</description>
     </item>
     
