@@ -21,7 +21,7 @@ enableMissingTranslationPlaceholders = false
 [params]
 
     # Source Code repository section
-    description = "Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站"
+    description = "Go语言开发的神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站"
     github_repository = "https://github.com/suvvm/ToadOCRDocument"
     # version = "0.9.7"
 
