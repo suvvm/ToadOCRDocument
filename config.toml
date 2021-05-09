@@ -1,5 +1,5 @@
 title = "Toad OCR"
-baseURL = "http://http://vjp.suvvm.work:2015"
+baseURL = "http://vjp.suvvm.work"
 # languageCode = "en-us"
 theme = "hugo-theme-techdoc"
 #themesDir = "../.."

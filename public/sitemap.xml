@@ -2,76 +2,76 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://http://vjp.suvvm.work:2015/getting-start/</loc>
+    <loc>http://vjp.suvvm.work/getting-start/</loc>
     <lastmod>2021-05-09T13:18:41+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/tutorials/install-dependencies/</loc>
+    <loc>http://vjp.suvvm.work/tutorials/install-dependencies/</loc>
     <lastmod>2021-05-04T16:35:56+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/tutorials/</loc>
+    <loc>http://vjp.suvvm.work/tutorials/</loc>
     <lastmod>2021-05-04T16:47:05+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/about/</loc>
+    <loc>http://vjp.suvvm.work/about/</loc>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/</loc>
+    <loc>http://vjp.suvvm.work/</loc>
     <lastmod>2021-05-09T13:18:41+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/getting-start/use-http-client/</loc>
+    <loc>http://vjp.suvvm.work/getting-start/use-http-client/</loc>
     <lastmod>2021-05-09T13:18:41+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/distributed-cluster/etcd-register-resolver/</loc>
+    <loc>http://vjp.suvvm.work/distributed-cluster/etcd-register-resolver/</loc>
     <lastmod>2021-05-08T21:16:00+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/distributed-cluster/cluster-construction/</loc>
+    <loc>http://vjp.suvvm.work/distributed-cluster/cluster-construction/</loc>
     <lastmod>2021-05-08T16:58:17+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/distributed-cluster/toad-ocr-preprocessor-server/</loc>
+    <loc>http://vjp.suvvm.work/distributed-cluster/toad-ocr-preprocessor-server/</loc>
     <lastmod>2021-05-08T16:55:24+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/distributed-cluster/toad-ocr-engine-server/</loc>
+    <loc>http://vjp.suvvm.work/distributed-cluster/toad-ocr-engine-server/</loc>
     <lastmod>2021-05-08T16:55:13+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/distributed-cluster/proxy-china/</loc>
+    <loc>http://vjp.suvvm.work/distributed-cluster/proxy-china/</loc>
     <lastmod>2021-05-08T16:54:21+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/distributed-cluster/environment-construction/</loc>
+    <loc>http://vjp.suvvm.work/distributed-cluster/environment-construction/</loc>
     <lastmod>2021-05-08T16:53:51+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/distributed-cluster/</loc>
+    <loc>http://vjp.suvvm.work/distributed-cluster/</loc>
     <lastmod>2021-05-08T15:46:21+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/how-toad-ocr-work/</loc>
+    <loc>http://vjp.suvvm.work/how-toad-ocr-work/</loc>
     <lastmod>2021-05-08T15:26:03+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/how-toad-ocr-work/persistence/</loc>
+    <loc>http://vjp.suvvm.work/how-toad-ocr-work/persistence/</loc>
     <lastmod>2021-05-07T21:16:30+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/how-toad-ocr-work/visualize/</loc>
+    <loc>http://vjp.suvvm.work/how-toad-ocr-work/visualize/</loc>
     <lastmod>2021-05-07T21:09:36+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/how-toad-ocr-work/data-load/</loc>
+    <loc>http://vjp.suvvm.work/how-toad-ocr-work/data-load/</loc>
     <lastmod>2021-05-07T20:24:58+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/how-toad-ocr-work/zca/</loc>
+    <loc>http://vjp.suvvm.work/how-toad-ocr-work/zca/</loc>
     <lastmod>2021-05-07T17:57:33+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/how-toad-ocr-work/cnn/</loc>
+    <loc>http://vjp.suvvm.work/how-toad-ocr-work/cnn/</loc>
     <lastmod>2021-05-07T17:57:23+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/how-toad-ocr-work/snn/</loc>
+    <loc>http://vjp.suvvm.work/how-toad-ocr-work/snn/</loc>
     <lastmod>2021-05-07T16:54:39+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/getting-start/contribut-doc/</loc>
+    <loc>http://vjp.suvvm.work/getting-start/contribut-doc/</loc>
     <lastmod>2021-05-07T16:30:32+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/getting-start/tags-map/</loc>
+    <loc>http://vjp.suvvm.work/getting-start/tags-map/</loc>
     <lastmod>2021-05-07T16:12:51+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/tutorials/use-client/</loc>
+    <loc>http://vjp.suvvm.work/tutorials/use-client/</loc>
     <lastmod>2021-05-04T16:36:37+08:00</lastmod>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/categories/</loc>
+    <loc>http://vjp.suvvm.work/categories/</loc>
   </url><url>
-    <loc>http://http://vjp.suvvm.work:2015/tags/</loc>
+    <loc>http://vjp.suvvm.work/tags/</loc>
   </url>
 </urlset>
