@@ -1,8 +1,10 @@
 ---
-title: "Etcd gRPC 服务注册与服务发现 Etcd gRPC Register Resolver"
+title: "Etcd gRPC 服务注册与服务发现"
 date: 2021-05-08T21:16:00+08:00
 draft: false
 ---
+
+# Etcd gRPC 服务注册与服务发现 Etcd gRPC Register Resolver
 
 本章主要介绍了ToadOCR中gRPC使用Etcd集群做负载均衡，服务注册与服务发现逻辑。
 

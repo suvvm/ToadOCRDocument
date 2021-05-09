@@ -1,9 +1,10 @@
 ---
-title: "数据集 Data load"
+title: "数据集加载"
 date: 2021-05-07T20:24:58+08:00
 draft: false
 ---
 
+# 数据集 Data load
 
 ​	ToadOCREngine 使用EMNIST与MNIST两种数据集进行训练，本章将对数据加载部分进行介绍
 

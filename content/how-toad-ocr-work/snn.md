@@ -1,5 +1,5 @@
 ---
-title: "脉冲神经网络 Spiking Neural Network"
+title: "脉冲神经网络"
 date: 2021-05-07T16:54:39+08:00
 draft: false
 ---

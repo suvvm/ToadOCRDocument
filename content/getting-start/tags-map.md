@@ -1,8 +1,11 @@
 ---
-title: "标签对照 Tags Mapping"
+title: "标签对照"
 date: 2021-05-07T16:12:51+08:00
 draft: false
 ---
+
+# 标签对照 Tags Mapping
+
 ​	此页面包含各种定义和词汇表，可以帮助你了解ToadOCR并与开发团队进行交流(通过github pull request 或 issues)
 ## 字符标签对照
 

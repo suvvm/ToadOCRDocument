@@ -1,8 +1,10 @@
 ---
-title: "集群搭建 Cluster Construction"
+title: "集群搭建"
 date: 2021-05-08T16:58:17+08:00
 draft: false
 ---
+
+# 集群搭建 Cluster Construction
 
 ​	本章主要表述将多个服务器构建为一个分布式集群的方法。
 

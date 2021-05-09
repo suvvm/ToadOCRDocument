@@ -1,10 +1,10 @@
 ---
-title: "图像可视化 Visualize"
+title: "图像可视化"
 date: 2021-05-07T21:09:36+08:00
 draft: false
 ---
 
-# 图像可视化
+# 图像可视化 Visualize
 
 ​	处理EMNIST数据集图像数据时，可视化也非常有用，ToadOCREngine提供了图像可视化功能。
 
