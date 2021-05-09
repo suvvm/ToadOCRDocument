@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>图像可视化 - Toad OCR</title>
+<meta name="description" content="Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站">
+<meta name="generator" content="Hugo 0.83.0" />
+<link href="https://example.com/index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://example.com/how-toad-ocr-work/visualize/">
+<link rel="stylesheet" href="https://example.com/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://example.com/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script src="https://example.com/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="图像可视化" />
+<meta property="og:description" content="图像可视化 Visualize ​ 处理EMNIST数据集图像数据时，可视化也非常有用，ToadOCREngine提供了图像可视化功能。 一、像素放大 ​ 之前读取图像" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/how-toad-ocr-work/visualize/" /><meta property="og:image" content="https://example.com/images/og-image.png"/><meta property="article:section" content="how-toad-ocr-work" />
+<meta property="article:published_time" content="2021-05-07T21:09:36&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-07T21:09:36&#43;08:00" /><meta property="og:site_name" content="Hugo Techdoc Theme" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/images/og-image.png"/>
+
+<meta name="twitter:title" content="图像可视化"/>
+<meta name="twitter:description" content="图像可视化 Visualize ​ 处理EMNIST数据集图像数据时，可视化也非常有用，ToadOCREngine提供了图像可视化功能。 一、像素放大 ​ 之前读取图像"/>
+<meta itemprop="name" content="图像可视化">
+<meta itemprop="description" content="图像可视化 Visualize ​ 处理EMNIST数据集图像数据时，可视化也非常有用，ToadOCREngine提供了图像可视化功能。 一、像素放大 ​ 之前读取图像"><meta itemprop="datePublished" content="2021-05-07T21:09:36&#43;08:00" />
+<meta itemprop="dateModified" content="2021-05-07T21:09:36&#43;08:00" />
+<meta itemprop="wordCount" content="1082"><meta itemprop="image" content="https://example.com/images/og-image.png"/>
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
+<p class="description">Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站</p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/getting-start/">快速开始</a></li>
+<li><a href="/tutorials/">使用讲解</a></li>
+<li><a href="/about/">关于</a></li>
+<li class="active"><a href="/how-toad-ocr-work/">Toad Ocr 如何运作</a></li>
+<li><a href="/distributed-cluster/">分布式集群</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>图像可视化</h1>
+<h1 id="图像可视化-visualize">图像可视化 Visualize</h1>
+<p>​	处理EMNIST数据集图像数据时，可视化也非常有用，ToadOCREngine提供了图像可视化功能。</p>
+<h2 id="一像素放大">一、像素放大</h2>
+<p>​	之前读取图像数据为张量时使用了PiexlWeight函数将图像像素从字节转换为float64类型并将范围缩放至0.0~1.0，若想进行图像可视化，则需要翻转函数</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// ReversePixelWeight 像素灰度反向放大函数
+</span><span style="color:#75715e">// 将缩放后的像素灰度浮点恢复为8位字节灰度值
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 入参
+</span><span style="color:#75715e">//	px float64	// 浮点灰度值
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 返回
+</span><span style="color:#75715e">//	byte		// 8位字节灰度值
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">ReversePixelWeight</span>(<span style="color:#a6e22e">px</span> <span style="color:#66d9ef">float64</span>) <span style="color:#66d9ef">byte</span> {
+	<span style="color:#66d9ef">return</span> byte((<span style="color:#a6e22e">px</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">0.001</span>) <span style="color:#f92672">/</span> <span style="color:#ae81ff">0.999</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">PixelRange</span>)
+}
+</code></pre></div><h2 id="二实现可视化">二、实现可视化</h2>
+<p>​	EMNIST数据集合在load后是一个巨大的图像切片，需要先计算出要可视化的数据（每行图像数量和每列图像数量）。在获得所需要的数据之后，通过go对切片的slice将张量进行分割，之后重新构造为一个（rows,cols,28,28）的4维张量。</p>
+<p>​	之后可以利用，go内置图像处理包创建灰度图像 <code>canvas := image.NewGray(rect)</code>。image.Gray其实是一个字节型的切片，且每个字节是一个像素。之后循环遍历每块中的行和列，从张量职工提取正确的值进行填充，并通过上方ReversePixelWeight函数将浮点反向放大并转换为字节，之后将字节转换为color.Gray。最后利用canvas.Set(x, y, c)设置画布中的像素即可完成可视化编码。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// Visualize 图像可视化实现函数
+</span><span style="color:#75715e">// 给定行数和列数，在float64张量data中获取图像，对像素灰度反向放大，
+</span><span style="color:#75715e">// 最终拼接为一个包含rows * cols个原始图像，文件名为filename的png图像
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 入参
+</span><span style="color:#75715e">//	data tensor.Tensor	// 保存所有图像float64数据的张量
+</span><span style="color:#75715e">//	rows int			// 目标图像每行所包含原始图像的数量
+</span><span style="color:#75715e">//	cols int			// 目标图像每列所包含原始图像的数量
+</span><span style="color:#75715e">//	filename string		// 目标图像文件名
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 返回
+</span><span style="color:#75715e">// error				// 错误信息
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Visualize</span>(<span style="color:#a6e22e">data</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#a6e22e">rows</span>, <span style="color:#a6e22e">cols</span> <span style="color:#66d9ef">int</span>, <span style="color:#a6e22e">filename</span> <span style="color:#66d9ef">string</span>) <span style="color:#66d9ef">error</span> {
+	<span style="color:#a6e22e">imageTotal</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">rows</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">cols</span>	<span style="color:#75715e">// 计算图像包含原始图像总数
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">sliced</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">data</span>
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">imageTotal</span> &gt; <span style="color:#ae81ff">1</span> {
+		<span style="color:#a6e22e">sliced</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">Slice</span>(<span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">MakeRS</span>(<span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">imageTotal</span>), <span style="color:#66d9ef">nil</span>)	<span style="color:#75715e">// 对data张量切片
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+		}
+	}
+	<span style="color:#75715e">// 将分割后的张量重新构造为一个四维切片，可以认为这是一个rows * cols的，
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// 由rawImageRows * rawImageCols的原始图像组成的行和列
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">sliced</span>.<span style="color:#a6e22e">Reshape</span>(<span style="color:#a6e22e">rows</span>, <span style="color:#a6e22e">cols</span>, <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImageRows</span>, <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImageCols</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#a6e22e">imRows</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImageRows</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">rows</span>
+	<span style="color:#a6e22e">imCols</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImageCols</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">cols</span>
+	<span style="color:#a6e22e">rect</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">image</span>.<span style="color:#a6e22e">Rect</span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">imCols</span>, <span style="color:#a6e22e">imRows</span>)	<span style="color:#75715e">// 构造对应大小的矩形图像
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">canvas</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">image</span>.<span style="color:#a6e22e">NewGray</span>(<span style="color:#a6e22e">rect</span>)	<span style="color:#75715e">// 根据构造的矩形创建灰度图画布
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// 遍历图像才张量中提取像素灰度值进行填充
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">cols</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+		<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">j</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">j</span> &lt; <span style="color:#a6e22e">rows</span>; <span style="color:#a6e22e">j</span><span style="color:#f92672">++</span> {
+			<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">patch</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>
+			<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">patch</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">sliced</span>.<span style="color:#a6e22e">Slice</span>(<span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">MakeRS</span>(<span style="color:#a6e22e">i</span>, <span style="color:#a6e22e">i</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>), <span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">MakeRS</span>(<span style="color:#a6e22e">j</span>, <span style="color:#a6e22e">j</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+				<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+			}
+			<span style="color:#a6e22e">patchData</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">patch</span>.<span style="color:#a6e22e">Data</span>().([]<span style="color:#66d9ef">float64</span>)
+			<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">k</span>, <span style="color:#a6e22e">px</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">patchData</span> {
+				<span style="color:#a6e22e">x</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">j</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImageRows</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">k</span> <span style="color:#f92672">%</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImageRows</span>
+				<span style="color:#a6e22e">y</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImageCols</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">k</span> <span style="color:#f92672">/</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImageCols</span>
+				<span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">color</span>.<span style="color:#a6e22e">Gray</span>{<span style="color:#a6e22e">ReversePixelWeight</span>(<span style="color:#a6e22e">px</span>)}
+				<span style="color:#a6e22e">canvas</span>.<span style="color:#a6e22e">Set</span>(<span style="color:#a6e22e">x</span>, <span style="color:#a6e22e">y</span>, <span style="color:#a6e22e">c</span>)
+			}
+		}
+	}
+	<span style="color:#75715e">// 构造png图像文件
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">file</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">WriteCloser</span>
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">file</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Create</span>(<span style="color:#e6db74">&#34;output/images/&#34;</span><span style="color:#f92672">+</span><span style="color:#a6e22e">filename</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">png</span>.<span style="color:#a6e22e">Encode</span>(<span style="color:#a6e22e">file</span>, <span style="color:#a6e22e">canvas</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">file</span>.<span style="color:#a6e22e">Close</span>(); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><div class="edit-meta">
+Last updated on 7 May 2021
+
+
+<br>
+Published on 7 May 2021
+<br><a href="https://github.com/suvvm/ToadOCRDocument/edit/master/content/how-toad-ocr-work/visualize.md" class="edit-page"><i class="fas fa-pen-square"></i>&nbsp;Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://example.com/how-toad-ocr-work/persistence/" title="神经网络权重持久化与恢复"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - 神经网络权重持久化与恢复</a>
+<a class="nav nav-next" href="https://example.com/how-toad-ocr-work/data-load/" title="数据集加载">Next - 数据集加载 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://example.com">Home</a></li>
+
+<li class=""><a href="https://example.com/getting-start/">快速开始</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/getting-start/use-http-client/">使用Toad OCR http客户端</a></li>
+<li class=""><a href="https://example.com/getting-start/contribut-doc/">为开源文档做贡献</a></li>
+<li class=""><a href="https://example.com/getting-start/tags-map/">标签对照</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/tutorials/">使用讲解</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/tutorials/install-dependencies/">服务器环境搭建</a></li>
+<li class=""><a href="https://example.com/tutorials/use-client/">使用RPC客户端</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/about/">关于</a>
+  
+</li>
+
+<li class=""><a href="https://example.com/distributed-cluster/">分布式集群</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/distributed-cluster/etcd-register-resolver/">Etcd gRPC 服务注册与服务发现</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/cluster-construction/">集群搭建</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/">图像预处理服务部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-engine-server/">OCR识别服务节点部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/proxy-china/">中国大陆服务器代理</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/environment-construction/">服务器环境搭建</a></li>
+</ul>
+  
+</li>
+
+<li class="parent"><a href="https://example.com/how-toad-ocr-work/">Toad Ocr 如何运作</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/how-toad-ocr-work/persistence/">神经网络权重持久化与恢复</a></li>
+<li class="active"><a href="https://example.com/how-toad-ocr-work/visualize/">图像可视化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/data-load/">数据集加载</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/zca/">对图像进行ZCA白化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/cnn/">卷积神经网络</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/snn/">脉冲神经网络</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_SVG"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[\[','\]\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+</div>
+</body>
+</html>

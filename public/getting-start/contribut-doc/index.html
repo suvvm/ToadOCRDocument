@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>为开源文档做贡献 - Toad OCR</title>
+<meta name="description" content="Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站">
+<meta name="generator" content="Hugo 0.83.0" />
+<link href="https://example.com/index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://example.com/getting-start/contribut-doc/">
+<link rel="stylesheet" href="https://example.com/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://example.com/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script src="https://example.com/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="为开源文档做贡献" />
+<meta property="og:description" content="为开源文档做贡献 Contribut The Document 开始为开源文档做贡献 ​ 如果您想开始为ToadOCR文档做贡献，此页面及其相关主题可以帮助您开始使用。您无需成为开发人员" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/getting-start/contribut-doc/" /><meta property="og:image" content="https://example.com/images/og-image.png"/><meta property="article:section" content="getting-start" />
+<meta property="article:published_time" content="2021-05-07T16:30:32&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-07T16:30:32&#43;08:00" /><meta property="og:site_name" content="Hugo Techdoc Theme" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/images/og-image.png"/>
+
+<meta name="twitter:title" content="为开源文档做贡献"/>
+<meta name="twitter:description" content="为开源文档做贡献 Contribut The Document 开始为开源文档做贡献 ​ 如果您想开始为ToadOCR文档做贡献，此页面及其相关主题可以帮助您开始使用。您无需成为开发人员"/>
+<meta itemprop="name" content="为开源文档做贡献">
+<meta itemprop="description" content="为开源文档做贡献 Contribut The Document 开始为开源文档做贡献 ​ 如果您想开始为ToadOCR文档做贡献，此页面及其相关主题可以帮助您开始使用。您无需成为开发人员"><meta itemprop="datePublished" content="2021-05-07T16:30:32&#43;08:00" />
+<meta itemprop="dateModified" content="2021-05-07T16:30:32&#43;08:00" />
+<meta itemprop="wordCount" content="1863"><meta itemprop="image" content="https://example.com/images/og-image.png"/>
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
+<p class="description">Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站</p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li class="active"><a href="/getting-start/">快速开始</a></li>
+<li><a href="/tutorials/">使用讲解</a></li>
+<li><a href="/about/">关于</a></li>
+<li><a href="/how-toad-ocr-work/">Toad Ocr 如何运作</a></li>
+<li><a href="/distributed-cluster/">分布式集群</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>为开源文档做贡献</h1>
+<h1 id="为开源文档做贡献-contribut-the-document">为开源文档做贡献 Contribut The Document</h1>
+<h1 id="开始为开源文档做贡献">开始为开源文档做贡献</h1>
+<p>​	如果您想开始为ToadOCR文档做贡献，此页面及其相关主题可以帮助您开始使用。您无需成为开发人员或技术人员即可对ToadOCR文档和用户体验产生重大影响！编辑此页面上所有主题所需的只是一个GitHub帐户和一个Web浏览器。</p>
+<h2 id="有关文档的基础知识">有关文档的基础知识</h2>
+<p>​	ToadOCR文档是用Markdown编写的，并使用Hugo进行了处理和部署。来源在GitHub上，网址为https://github.com/suvvm/ToadOCRDocument/。大多数文档来源都存储在<code>/content/</code>目录下。</p>
+<p>​	您可以从GitHub网站上提交问题，编辑内容以及查看其他方面的更改。您还可以使用GitHub的嵌入式历史记录和搜索工具。</p>
+<h3 id="文档布局">文档布局</h3>
+<p>该文档遵循该帖子中描述的布局 <a href="https://www.divio.com/blog/documentation/">documentation</a>。</p>
+<p>它分为多个部分。每个部分都是<code>content/</code> 存储库的目录。</p>
+<h3 id="多种语言">多种语言</h3>
+<p>​	ToadOCR文档当前还没有进行多语言文档处理，但hugo提供了完备的多语言处理方式，文档内容在/ content /中可以以多种语言的方式提供。通过添加由以下内容确定的两个字母的代码，可以用任何语言翻译每个页面：<a href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes">ISO 639-1标准</a>。没有后缀的文件默认为英语。</p>
+<p>例如，页面的法语文档被命名为 <code>page.fr.md</code></p>
+<h2 id="改善文件">改善文件</h2>
+<h3 id="修复现有内容">修复现有内容</h3>
+<p>​	您可以通过修复文档中的错误或错字来改善文档。要改善现有内容，请在创建<em>fork</em>之后提交<em>拉取请求（PR）</em>。这两个词是<a href="https://help.github.com/categories/collaborating-with-issues-and-pull-requests/">特定于GitHub</a>。出于本主题的目的，您不需要了解所有有关它们的信息，因为您可以使用Web浏览器来完成所有操作。</p>
+<h3 id="创建新内容">创建新内容。</h3>
+<p>​	存储库的源代码保存在 <code>develop</code>分支。因此，该分支必须是新分支的基础，PR也应指向该分支。</p>
+<p>​	要创建新内容，请在与文档主题相对应的目录中创建一个新页面（请参见该段 <a href="https://gorgonia.org/getting-started/contributing-doc/#layout-of-the-documentation">文档布局</a>）</p>
+<p>​	如果您在<code>hugo</code>本地，则可以使用以下方法创建一个新页面：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">hugo new content/about/mypage.md
+</code></pre></div><p>否则，请创建一个标题如下的新页面：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">---
+<span style="color:#f92672">title</span>: <span style="color:#e6db74">&#34;The title of the page&#34;</span>
+<span style="color:#f92672">date</span>: <span style="color:#e6db74">2021-05-06T14:59:03</span><span style="color:#ae81ff">+01</span>:<span style="color:#ae81ff">00</span>
+<span style="color:#f92672">draft</span>: <span style="color:#66d9ef">false</span>
+---
+
+<span style="color:#ae81ff">your content</span>
+</code></pre></div><p>然后按照以下说明提交拉取请求。</p>
+<h3 id="提交拉取请求">提交拉取请求</h3>
+<p>请按照以下步骤提交请求，以改进ToadOCR文档。</p>
+<ul>
+<li>
+<p>在出现问题的页面上，单击右上角的“编辑此页面”图标。出现一个新的GitHub页面，其中包含一些帮助文本。</p>
+</li>
+<li>
+<p>如果您从未在github上创建过ToadOCR文档存储库的分支，您可以这样做。在您的GitHub用户名下目标创建派生。分支通常具有一个网址，例如<code>https://github.com/&lt;username&gt;/website</code>，除非您已经有一个名称冲突的存储库。</p>
+<p>提示您创建派生的原因是您无权直接将分支推送到ToadOCR文档存储库。</p>
+</li>
+<li>
+<p>出现GitHub Markdown编辑器，并加载了源Markdown文件。进行更改。在编辑器下方，填写<strong>Propose file change</strong>表单。第一个字段是提交消息的摘要，长度不得超过50个字符。第二个字段是可选的，但如果有条件，可以包含更多详细的描述信息。单击<strong>Propose file change</strong>。所做的更改将保存为提交到您分支中的新分支中，该分支会自动命名为<code>patch-1</code>。</p>
+</li>
+<li>
+<p>下一个屏幕总结了所做的更改，方法是将新分支（<strong>head fork</strong> 与 <strong>compare</strong>选择框）与 <strong>base fork</strong> and <strong>base</strong>分支的当前状态进行比较（<code>develop</code> 在 <code>suvvm/ToadOCRDocument</code>）。您可以更改任何显示的选择框，但现在不要这样做。查看屏幕底部的分支差异查看器，如果一切看起来正确，请点击 <strong>Create pull request</strong>.</p>
+</li>
+<li>
+<p>出现 <strong>Open a pull request</strong> 页面。拉取请求的分支与提交摘要相同，但是可以根据需要进行更改。正文由您的扩展提交消息（如果存在）和一些模板文本填充。阅读模板文本并填写所需的详细信息，然后删除多余的模板文本。如果添加到说明中<code>fixes #&lt;000000&gt;</code> 或者 <code>closes #&lt;000000&gt;</code>， 在哪里 <code>#&lt;000000&gt;</code>是相关问题的编号，当PR合并时，GitHub将自动关闭该问题。将<strong>Allow edits from maintainers</strong> 复选框取消。单击  <strong>Create pull request</strong>.</p>
+<p>恭喜你！您的提交的请求位于 <a href="https://github.com/suvvm/ToadOCRDocument/pulls">Pull Request</a>。</p>
+</li>
+<li>
+<p>等待审查。如果审阅者要求您进行更改，则可以转到 <strong>Files changed</strong> 页面，然后在拉请求中已更改的任何文件上单击铅笔图标。当您保存更改的文件时，将在由拉取请求监视的分支中创建一个新的提交。如果您正在等待审核者审核更改，请每隔7天主动与审核者（suvvm）联系一次。</p>
+</li>
+<li>
+<p>如果您的更改被接受，那么审阅者会合并您的请求请求，并且几分钟后，更改会在ToadOCRDocument网站上发布。</p>
+</li>
+</ul>
+<p>这只是提交请求的一种方式。如果您已经是Git和GitHub的高级用户，则可以使用本地GUI或命令行Git客户端，而不是使用GitHub UI。</p>
+<div class="edit-meta">
+Last updated on 7 May 2021
+
+
+<br>
+Published on 7 May 2021
+<br><a href="https://github.com/suvvm/ToadOCRDocument/edit/master/content/getting-start/contribut-doc.md" class="edit-page"><i class="fas fa-pen-square"></i>&nbsp;Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://example.com/getting-start/use-http-client/" title="使用Toad OCR http客户端"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - 使用Toad OCR http客户端</a>
+<a class="nav nav-next" href="https://example.com/getting-start/tags-map/" title="标签对照">Next - 标签对照 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://example.com">Home</a></li>
+
+<li class="parent"><a href="https://example.com/getting-start/">快速开始</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/getting-start/use-http-client/">使用Toad OCR http客户端</a></li>
+<li class="active"><a href="https://example.com/getting-start/contribut-doc/">为开源文档做贡献</a></li>
+<li class=""><a href="https://example.com/getting-start/tags-map/">标签对照</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/tutorials/">使用讲解</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/tutorials/install-dependencies/">服务器环境搭建</a></li>
+<li class=""><a href="https://example.com/tutorials/use-client/">使用RPC客户端</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/about/">关于</a>
+  
+</li>
+
+<li class=""><a href="https://example.com/distributed-cluster/">分布式集群</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/distributed-cluster/etcd-register-resolver/">Etcd gRPC 服务注册与服务发现</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/cluster-construction/">集群搭建</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/">图像预处理服务部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-engine-server/">OCR识别服务节点部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/proxy-china/">中国大陆服务器代理</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/environment-construction/">服务器环境搭建</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/how-toad-ocr-work/">Toad Ocr 如何运作</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/how-toad-ocr-work/persistence/">神经网络权重持久化与恢复</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/visualize/">图像可视化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/data-load/">数据集加载</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/zca/">对图像进行ZCA白化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/cnn/">卷积神经网络</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/snn/">脉冲神经网络</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_SVG"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[\[','\]\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+</div>
+</body>
+</html>

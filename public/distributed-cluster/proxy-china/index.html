@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>中国大陆服务器代理 - Toad OCR</title>
+<meta name="description" content="Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站">
+<meta name="generator" content="Hugo 0.83.0" />
+<link href="https://example.com/index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://example.com/distributed-cluster/proxy-china/">
+<link rel="stylesheet" href="https://example.com/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://example.com/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script src="https://example.com/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="中国大陆服务器代理" />
+<meta property="og:description" content="中国大陆服务器代理 Proxy China ​ ⚠️警告，本项目代理只用于访问受阻断依赖。经由本文章所导致的一切法律责任有读者个人负责！ 一、为什么需要代理 ​ 大陆的开" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/distributed-cluster/proxy-china/" /><meta property="og:image" content="https://example.com/images/og-image.png"/><meta property="article:section" content="distributed-cluster" />
+<meta property="article:published_time" content="2021-05-08T16:54:21&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-08T16:54:21&#43;08:00" /><meta property="og:site_name" content="Hugo Techdoc Theme" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/images/og-image.png"/>
+
+<meta name="twitter:title" content="中国大陆服务器代理"/>
+<meta name="twitter:description" content="中国大陆服务器代理 Proxy China ​ ⚠️警告，本项目代理只用于访问受阻断依赖。经由本文章所导致的一切法律责任有读者个人负责！ 一、为什么需要代理 ​ 大陆的开"/>
+<meta itemprop="name" content="中国大陆服务器代理">
+<meta itemprop="description" content="中国大陆服务器代理 Proxy China ​ ⚠️警告，本项目代理只用于访问受阻断依赖。经由本文章所导致的一切法律责任有读者个人负责！ 一、为什么需要代理 ​ 大陆的开"><meta itemprop="datePublished" content="2021-05-08T16:54:21&#43;08:00" />
+<meta itemprop="dateModified" content="2021-05-08T16:54:21&#43;08:00" />
+<meta itemprop="wordCount" content="1298"><meta itemprop="image" content="https://example.com/images/og-image.png"/>
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
+<p class="description">Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站</p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/getting-start/">快速开始</a></li>
+<li><a href="/tutorials/">使用讲解</a></li>
+<li><a href="/about/">关于</a></li>
+<li><a href="/how-toad-ocr-work/">Toad Ocr 如何运作</a></li>
+<li class="active"><a href="/distributed-cluster/">分布式集群</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>中国大陆服务器代理</h1>
+<h1 id="中国大陆服务器代理-proxy-china">中国大陆服务器代理 Proxy China</h1>
+<p>​	⚠️警告，本项目代理只用于访问受阻断依赖。经由本文章所导致的一切法律责任有读者个人负责！</p>
+<h2 id="一为什么需要代理">一、为什么需要代理</h2>
+<p>​	大陆的开发环境不能满足本项目依赖需求，本项目核心使用golang进行开发，使用go mod管理以来，大陆运营商网络没有完成对go getable的支持，且goproxy.cn中存在部分依赖版本hash code验证错误的问题，该部分依赖不经代理无法访问。且大陆各个运营商提供的网络不便于使用git进行版本管理、CI/CD与自动话部署。</p>
+<h2 id="二代理的部署">二、代理的部署</h2>
+<h3 id="1准备代理服务器">1、准备代理服务器</h3>
+<p>代理服务器标准：</p>
+<ul>
+<li>服务器位于可以正常访问依赖的网络环境</li>
+<li>公网IPv4地址</li>
+<li>充足的带宽（20+Mbps）</li>
+<li>有域名的A标签指向该服务器IP</li>
+</ul>
+<h3 id="2配置代理服务端">2、配置代理服务端</h3>
+<h4 id="a放行端口">a.放行端口</h4>
+<p>​	在提供服务的运营商安全组中添加入站规则，放行目标机器80或443端口并放行其他一个任意可用接口（本章以2021为例）</p>
+<h4 id="biptables-放行端口">b.iptables 放行端口</h4>
+<p>放行80端口TCP流量</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ iptables -A INPUT -p tcp --dport <span style="color:#ae81ff">80</span> -j ACCEPT
+</code></pre></div><p>放行443端口TCP流量</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ iptables -A INPUT -p tcp --dport <span style="color:#ae81ff">443</span> -j ACCEPT
+</code></pre></div><p>放行2021端口TCP流量</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ iptables -A INPUT -p tcp --dport <span style="color:#ae81ff">2021</span> -j ACCEPT
+</code></pre></div><h4 id="c搭建伪装站点">c.搭建伪装站点</h4>
+<p>​	代理流量在使用时伪装为普通http与https请求，若一直访问目标机器对应端口，被北理工专利强化过的GFW会认出这些代理流量，从而导致代理服务器或端口遭到封禁。若想使代理长期有效，需要将访问代理端口的流量进行重定向，重定向至伪装站点，GFW在探查时会被引导至伪装主页导致其认为当前代理流量是对目标伪装站点的正常访问流量。</p>
+<p>​	准备web服务器nginx/caddy/tomcat，都可以，本项目使用caddy</p>
+<ul>
+<li>安装caddy</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">wget -N --no-check-certificate https://raw.githubusercontent.com/iiiiiii1/doubi/master/caddy_install.sh <span style="color:#f92672">&amp;&amp;</span> chmod +x caddy_install.sh <span style="color:#f92672">&amp;&amp;</span> bash caddy_install.sh
+</code></pre></div><p>使用说明</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">启动：/etc/init.d/caddy start
+停止：/etc/init.d/caddy stop
+重启：/etc/init.d/caddy restart
+查看状态：/etc/init.d/caddy status
+查看Caddy启动日志：tail -f /tmp/caddy.log
+</code></pre></div><ul>
+<li>
+<p>准备伪装站点代码</p>
+<p>将伪装站点index.html及其他依赖文件放置下方目录</p>
+</li>
+</ul>
+<pre><code>/usr/local/caddy/camouflage
+</code></pre><ul>
+<li>编辑caddy配置文件</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ cd /usr/local/caddy
+$ vim Caddyfile
+</code></pre></div><p>Caddyfile内容</p>
+<pre><code>http://{解析的域名}:2021 {
+root /usr/local/caddy/camouflage/
+}
+</code></pre><ul>
+<li>启动caddy服务器</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ /etc/init.d/caddy start
+</code></pre></div><ul>
+<li>
+<p>访问目标域名加端口确定伪装站点是否正常工作</p>
+<p>本项目伪装站点http://aws.suvvm.work</p>
+</li>
+</ul>
+<h4 id="d配置代理工具服务端">d.配置代理工具服务端</h4>
+<p>​	本项目使用shadowsocksR作为代理服务端</p>
+<ul>
+<li>安装shadowsocksR</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ wget -N --no-check-certificate https://raw.githubusercontent.com/teddysun/shadowsocks_install/master/shadowsocksR.sh <span style="color:#f92672">&amp;&amp;</span> chmod +x shadowsocksR.sh <span style="color:#f92672">&amp;&amp;</span> ./shadowsocksR.sh
+</code></pre></div><ul>
+<li>替换配置文件</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ vim /etc/shadowsocks.json
+</code></pre></div><p>配置如下</p>
+<pre><code>{
+    &quot;server&quot;:&quot;0.0.0.0&quot;,
+    &quot;server_ipv6&quot;:&quot;[::]&quot;,
+    &quot;server_port&quot;:80,
+    &quot;local_address&quot;:&quot;127.0.0.1&quot;,
+    &quot;local_port&quot;:1080,
+    &quot;password&quot;:&quot;{your password}&quot;,
+    &quot;timeout&quot;:120,
+    &quot;method&quot;:&quot;none&quot;,
+    &quot;protocol&quot;:&quot;auth_chain_a&quot;,
+    &quot;protocol_param&quot;:&quot;&quot;,
+    &quot;obfs&quot;:&quot;tls1.2_ticket_auth&quot;,
+    &quot;obfs_param&quot;:&quot;&quot;,
+    &quot;redirect&quot;:[&quot;*:80#127.0.0.1:2021&quot;],
+    &quot;dns_ipv6&quot;:false,
+    &quot;fast_open&quot;:false,
+    &quot;workers&quot;:1
+}
+</code></pre><p>上述配置文件使用80端口监听代理流量，并将接收到的代理请求重定向至2021端口，即伪装站点所在位置。使用none加密应用层明文，让国家知道你在干些什么，遵纪守法不加密，做个好公民。</p>
+<ul>
+<li>重启代理服务端</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ /etc/init.d/shadowsocks restart
+</code></pre></div><ul>
+<li>
+<p>测试</p>
+<p>http访问目标域名，若可以成功打开伪装站点，则证明代理服务端正常运行</p>
+</li>
+</ul>
+<h3 id="3配置代理客户端">3、配置代理客户端</h3>
+<p>配置被代理主机</p>
+<ul>
+<li>客户端安装</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ wget https://raw.githubusercontent.com/the0demiurge/CharlesScripts/master/charles/bin/ssr
+$ cp ssr /usr/local/bin/ssr
+$ yum install jq
+$ ssr install
+</code></pre></div><ul>
+<li>配置客户端</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">ssr config
+</code></pre></div><p>配置文件内容</p>
+<pre><code>{
+	&quot;server&quot;:&quot;{代理主机域名}&quot;,
+	&quot;server_port&quot;: 80,
+	&quot;local_address: &quot;127.0.0.1&quot;,
+	&quot;local_port&quot;: 1080,
+	&quot;password&quot;:&quot;{your password}&quot;,
+	&quot;method&quot;: &quot;none&quot;,
+	&quot;protocol&quot;: &quot;auth_chain_a&quot;,
+	&quot;protocol_param&quot;:&quot;&quot;,
+  &quot;obfs&quot;:&quot;tls1.2_ticket_auth&quot;,
+  &quot;obfs_param&quot;:&quot;&quot;,
+  &quot;timeout&quot;: 120,
+  &quot;udp_timeout&quot;: 60,
+  &quot;dns_ipv6&quot;:false,
+  &quot;fast_open&quot;:false,
+}
+</code></pre><ul>
+<li>配置本机http代理</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ export http_proxy<span style="color:#f92672">=</span>http://127.0.0.1:1080
+$ export https_proxy<span style="color:#f92672">=</span>http://127.0.0.1:1080
+</code></pre></div><div class="edit-meta">
+Last updated on 8 May 2021
+
+
+<br>
+Published on 8 May 2021
+<br><a href="https://github.com/suvvm/ToadOCRDocument/edit/master/content/distributed-cluster/proxy-china.md" class="edit-page"><i class="fas fa-pen-square"></i>&nbsp;Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://example.com/distributed-cluster/toad-ocr-engine-server/" title="OCR识别服务节点部署"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - OCR识别服务节点部署</a>
+<a class="nav nav-next" href="https://example.com/distributed-cluster/environment-construction/" title="服务器环境搭建">Next - 服务器环境搭建 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://example.com">Home</a></li>
+
+<li class=""><a href="https://example.com/getting-start/">快速开始</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/getting-start/use-http-client/">使用Toad OCR http客户端</a></li>
+<li class=""><a href="https://example.com/getting-start/contribut-doc/">为开源文档做贡献</a></li>
+<li class=""><a href="https://example.com/getting-start/tags-map/">标签对照</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/tutorials/">使用讲解</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/tutorials/install-dependencies/">服务器环境搭建</a></li>
+<li class=""><a href="https://example.com/tutorials/use-client/">使用RPC客户端</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/about/">关于</a>
+  
+</li>
+
+<li class="parent"><a href="https://example.com/distributed-cluster/">分布式集群</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/distributed-cluster/etcd-register-resolver/">Etcd gRPC 服务注册与服务发现</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/cluster-construction/">集群搭建</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/">图像预处理服务部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-engine-server/">OCR识别服务节点部署</a></li>
+<li class="active"><a href="https://example.com/distributed-cluster/proxy-china/">中国大陆服务器代理</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/environment-construction/">服务器环境搭建</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/how-toad-ocr-work/">Toad Ocr 如何运作</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/how-toad-ocr-work/persistence/">神经网络权重持久化与恢复</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/visualize/">图像可视化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/data-load/">数据集加载</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/zca/">对图像进行ZCA白化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/cnn/">卷积神经网络</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/snn/">脉冲神经网络</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_SVG"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[\[','\]\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+</div>
+</body>
+</html>

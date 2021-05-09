@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>数据集加载 - Toad OCR</title>
+<meta name="description" content="Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站">
+<meta name="generator" content="Hugo 0.83.0" />
+<link href="https://example.com/index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://example.com/how-toad-ocr-work/data-load/">
+<link rel="stylesheet" href="https://example.com/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://example.com/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script src="https://example.com/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="数据集加载" />
+<meta property="og:description" content="数据集 Data load ​ ToadOCREngine 使用EMNIST与MNIST两种数据集进行训练，本章将对数据加载部分进行介绍 一、数据集准备 ​ ToadOCREngine使用了M" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/how-toad-ocr-work/data-load/" /><meta property="og:image" content="https://example.com/images/og-image.png"/><meta property="article:section" content="how-toad-ocr-work" />
+<meta property="article:published_time" content="2021-05-07T20:24:58&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-07T20:24:58&#43;08:00" /><meta property="og:site_name" content="Hugo Techdoc Theme" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/images/og-image.png"/>
+
+<meta name="twitter:title" content="数据集加载"/>
+<meta name="twitter:description" content="数据集 Data load ​ ToadOCREngine 使用EMNIST与MNIST两种数据集进行训练，本章将对数据加载部分进行介绍 一、数据集准备 ​ ToadOCREngine使用了M"/>
+<meta itemprop="name" content="数据集加载">
+<meta itemprop="description" content="数据集 Data load ​ ToadOCREngine 使用EMNIST与MNIST两种数据集进行训练，本章将对数据加载部分进行介绍 一、数据集准备 ​ ToadOCREngine使用了M"><meta itemprop="datePublished" content="2021-05-07T20:24:58&#43;08:00" />
+<meta itemprop="dateModified" content="2021-05-07T20:24:58&#43;08:00" />
+<meta itemprop="wordCount" content="1852"><meta itemprop="image" content="https://example.com/images/og-image.png"/>
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
+<p class="description">Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站</p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/getting-start/">快速开始</a></li>
+<li><a href="/tutorials/">使用讲解</a></li>
+<li><a href="/about/">关于</a></li>
+<li class="active"><a href="/how-toad-ocr-work/">Toad Ocr 如何运作</a></li>
+<li><a href="/distributed-cluster/">分布式集群</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>数据集加载</h1>
+<h1 id="数据集-data-load">数据集 Data load</h1>
+<p>​	ToadOCREngine 使用EMNIST与MNIST两种数据集进行训练，本章将对数据加载部分进行介绍</p>
+<h2 id="一数据集准备">一、数据集准备</h2>
+<p>​	ToadOCREngine使用了MNIST与EMNIST数据集的byclass部分，数据集文件已上传至ToadOCR服务器集群leader——北京服务器中，clone ToadOCREngine源码后使用makebile进行构建时会触发对应脚本，主动从集群中获取数据集。</p>
+<p>​	用户也可以手动下载数据集并提取到resources对应目录中</p>
+<ul>
+<li>EMNIST
+<ul>
+<li><a href="https://www.suvvm.work/sundry/emnist-byclass.zip">ToadOCR集群下载</a></li>
+<li><a href="https://www.nist.gov/itl/products-and-services/emnist-dataset">官网下载</a></li>
+</ul>
+</li>
+<li>MNIST
+<ul>
+<li><a href="https://www.suvvm.work/sundry/mnist.zip">ToadOCR集群下载</a></li>
+<li><a href="http://yann.lecun.com/exdb/mnist/">官网下载</a></li>
+</ul>
+</li>
+</ul>
+<p>（⚠️警告：数据集文件当前仅存在于集群leader——北京服务器中并未同步至香港、东京以及欧洲法兰克福的服务器中，且为了防止对服务器恶意攻击，限制了下载速度不超过1mb/s）</p>
+<h2 id="二数据集加载">二、数据集加载</h2>
+<h3 id="1图像加载">1、图像加载</h3>
+<ul>
+<li>
+<p>读取文件</p>
+<p>ToadOCREngine会首先将图像文件读取为二进制字节数组（大端序），读取文件是会根基文件幻数判读取文件的正确性，并加载图像相关元数据（图像数量、图像长度、图像宽度）</p>
+</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// ReadImageFile 读取图像文件
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 入参
+</span><span style="color:#75715e">//	reader io.Reader	// 可读出字节流的数据源
+</span><span style="color:#75715e">// 文件幻数、图像数量、图像长度、图像宽度都是文件中的元数据
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 返回
+</span><span style="color:#75715e">//	[]RawImage		// 读取的图像
+</span><span style="color:#75715e">//	error				// 错误信息
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">ReadImageFile</span>(<span style="color:#a6e22e">reader</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">Reader</span>) ([]<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImage</span>, <span style="color:#66d9ef">error</span>) {
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">magic</span>, <span style="color:#a6e22e">n</span>, <span style="color:#a6e22e">nrow</span>, <span style="color:#a6e22e">ncol</span> <span style="color:#66d9ef">int32</span>
+	<span style="color:#75715e">// 在数据源reader中大端序读出文件幻数（长度为size of int32的数据）
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">Read</span>(<span style="color:#a6e22e">reader</span>, <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">BigEndian</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">magic</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">magic</span> <span style="color:#f92672">!=</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">ImageMagic</span> { <span style="color:#75715e">// 文件幻数与图像文件幻数不符，证明当前读取的文件非图像文件
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">ErrInvalid</span>
+	}
+	<span style="color:#75715e">// 在数据源reader中大端序读出图像数量
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">Read</span>(<span style="color:#a6e22e">reader</span>, <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">BigEndian</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">n</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#75715e">// 在数据源reader中大端序读出图像宽度
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">Read</span>(<span style="color:#a6e22e">reader</span>, <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">BigEndian</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">nrow</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#75715e">// 在数据源reader中大端序读出图像高度
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">Read</span>(<span style="color:#a6e22e">reader</span>, <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">BigEndian</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">ncol</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#a6e22e">images</span> <span style="color:#f92672">:=</span> make([]<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImage</span>, <span style="color:#a6e22e">n</span>)
+	<span style="color:#a6e22e">imageSize</span> <span style="color:#f92672">:=</span> int(<span style="color:#a6e22e">nrow</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">ncol</span>)	<span style="color:#75715e">// 图像大小
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; int(<span style="color:#a6e22e">n</span>); <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+		<span style="color:#a6e22e">images</span>[<span style="color:#a6e22e">i</span>] = make(<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImage</span>, <span style="color:#a6e22e">imageSize</span>)
+		<span style="color:#a6e22e">readSize</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">ReadFull</span>(<span style="color:#a6e22e">reader</span>, <span style="color:#a6e22e">images</span>[<span style="color:#a6e22e">i</span>])	<span style="color:#75715e">// 读取一个图像
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+		}
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">readSize</span> <span style="color:#f92672">!=</span> <span style="color:#a6e22e">imageSize</span> {	<span style="color:#75715e">// 读取长度与图像大小不一致
+</span><span style="color:#75715e"></span>			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">ErrInvalid</span>
+		}
+	}
+	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">images</span>, <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><ul>
+<li>
+<p>构造张量</p>
+<p>​	完成数据读取后会将得到的字节数组进行缩放得到[]float64支撑数组切片，之后构造为方便运算的张量。</p>
+<p>​	技术上来说，只需要将图像数据矩阵记为[][]float64即可用于神经网络运算。但经过大约40年时间来开发的高效线性代数运算算法（BLAS）已经非常成熟，对矩阵向量乘法，ToadOCR使用 gorgonia的张量。张量类似于向量，为了方便理解这里可以吧张量理解为矩阵，具体张量设计格式相见 <a href="https://github.com/gorgonia/tensor#design-of-dense">gorgonia.tensor</a>。</p>
+<p>（ps.为何不使用gonum的mat？因为gonum的mat多用于2维张量的运算，而ToadOCR神经网络运算中多为4维张量运算）</p>
+</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// PrepareX 将图像数组转化为tensor存储的矩阵
+</span><span style="color:#75715e">// tensor设计格式详见 https://github.com/gorgonia/tensor#design-of-dense
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 入参
+</span><span style="color:#75715e">//	images []RawImage	// 完成初始化的mnist图像数组
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 返回
+</span><span style="color:#75715e">//	tensor.Tensor	// tensor矩阵
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">PrepareX</span>(<span style="color:#a6e22e">images</span> []<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImage</span>) <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span> {
+	<span style="color:#a6e22e">rows</span> <span style="color:#f92672">:=</span> len(<span style="color:#a6e22e">images</span>)	<span style="color:#75715e">// 矩阵宽度
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">cols</span> <span style="color:#f92672">:=</span> len(<span style="color:#a6e22e">images</span>[<span style="color:#ae81ff">0</span>])	<span style="color:#75715e">// 矩阵高度
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// 创建矩阵的支撑平面切片，tensor会复用当前切片的空间
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">supportSlice</span> <span style="color:#f92672">:=</span> make([]<span style="color:#66d9ef">float64</span>, <span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">rows</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">cols</span>)
+	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">rows</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {	<span style="color:#75715e">// 复制缩放后的像素切片进入矩阵平面切片
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">j</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">j</span> &lt; len(<span style="color:#a6e22e">images</span>[<span style="color:#a6e22e">i</span>]); <span style="color:#a6e22e">j</span><span style="color:#f92672">++</span> {
+			<span style="color:#a6e22e">supportSlice</span> = append(<span style="color:#a6e22e">supportSlice</span>, <span style="color:#a6e22e">PixelWeight</span>(<span style="color:#a6e22e">images</span>[<span style="color:#a6e22e">i</span>][<span style="color:#a6e22e">j</span>]))
+		}
+	}
+	<span style="color:#75715e">// 返回rows * cols的tensor矩阵
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">New</span>(<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">WithShape</span>(<span style="color:#a6e22e">rows</span>, <span style="color:#a6e22e">cols</span>), <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">WithBacking</span>(<span style="color:#a6e22e">supportSlice</span>))
+}
+</code></pre></div><p>​	图像缩放算法主要讲图像像素值范围由0～255缩小至0.0~1.0，且另外提供了一种额外的检查，如果要返回的值为1.0将返回0.999，而不是1。这主要是因为当值为1.0是数学函数性能表现可能不正常。</p>
+<h3 id="2标签加载">2、标签加载</h3>
+<ul>
+<li>读取文件</li>
+</ul>
+<p>​	ToadOCREngine会首先将标签文件读取为二进制字节数组（大端序），读取文件是会根基文件幻数判读取文件的正确性，并加载标签相关元数据（标签数量）</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// ReadLabelFile 读取标签文件
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 入参
+</span><span style="color:#75715e">//	reader io.Reader	// 可读出字节流的数据源
+</span><span style="color:#75715e">// 文件幻数、标签数量都是文件中的元数据
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 返回
+</span><span style="color:#75715e">//	[]Label		// 读取的标签
+</span><span style="color:#75715e">//	error				// 错误信息
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">ReadLabelFile</span>(<span style="color:#a6e22e">reader</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">Reader</span>) ([]<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">Label</span>, <span style="color:#66d9ef">error</span>) {
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">magic</span>, <span style="color:#a6e22e">n</span> <span style="color:#66d9ef">int32</span>
+	<span style="color:#75715e">// 在数据源reader中大端序读出文件幻数（长度为size of int32的数据）
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">Read</span>(<span style="color:#a6e22e">reader</span>, <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">BigEndian</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">magic</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">magic</span> <span style="color:#f92672">!=</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">LabelMagic</span> { <span style="color:#75715e">// 文件幻数与标签文件幻数不符，证明当前读取的文件非标签文件
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">ErrInvalid</span>
+	}
+	<span style="color:#75715e">// 在数据源reader中大端序读出标签数量
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span>  <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">Read</span>(<span style="color:#a6e22e">reader</span>, <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">BigEndian</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">n</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#a6e22e">labels</span> <span style="color:#f92672">:=</span> make([]<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">Label</span>, <span style="color:#a6e22e">n</span>)
+	<span style="color:#75715e">// 读取标签至labels
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; int(<span style="color:#a6e22e">n</span>); <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+		<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">l</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">Label</span>
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">Read</span>(<span style="color:#a6e22e">reader</span>, <span style="color:#a6e22e">binary</span>.<span style="color:#a6e22e">BigEndian</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">l</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+		}
+		<span style="color:#a6e22e">labels</span>[<span style="color:#a6e22e">i</span>] = <span style="color:#a6e22e">l</span>
+	}
+	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">labels</span>, <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><ul>
+<li>
+<p>构造张量</p>
+<p>​	完成数据读取后会将得到的字节数组进行缩放得到[]float64支撑数组切片，并将标签记为热独向量，之后构造为方便运算的张量。</p>
+<p>​	为了方便运算，读取标签时会对标签进行热独编码得到热独向量，假设一个标签是9，那么它的热独向量编码就是[0,0,0,0,0,0,0,0,0,1]。</p>
+</li>
+</ul>
+<div class="edit-meta">
+Last updated on 7 May 2021
+
+
+<br>
+Published on 7 May 2021
+<br><a href="https://github.com/suvvm/ToadOCRDocument/edit/master/content/how-toad-ocr-work/data-load.md" class="edit-page"><i class="fas fa-pen-square"></i>&nbsp;Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://example.com/how-toad-ocr-work/visualize/" title="图像可视化"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - 图像可视化</a>
+<a class="nav nav-next" href="https://example.com/how-toad-ocr-work/zca/" title="对图像进行ZCA白化">Next - 对图像进行ZCA白化 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://example.com">Home</a></li>
+
+<li class=""><a href="https://example.com/getting-start/">快速开始</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/getting-start/use-http-client/">使用Toad OCR http客户端</a></li>
+<li class=""><a href="https://example.com/getting-start/contribut-doc/">为开源文档做贡献</a></li>
+<li class=""><a href="https://example.com/getting-start/tags-map/">标签对照</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/tutorials/">使用讲解</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/tutorials/install-dependencies/">服务器环境搭建</a></li>
+<li class=""><a href="https://example.com/tutorials/use-client/">使用RPC客户端</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/about/">关于</a>
+  
+</li>
+
+<li class=""><a href="https://example.com/distributed-cluster/">分布式集群</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/distributed-cluster/etcd-register-resolver/">Etcd gRPC 服务注册与服务发现</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/cluster-construction/">集群搭建</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/">图像预处理服务部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-engine-server/">OCR识别服务节点部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/proxy-china/">中国大陆服务器代理</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/environment-construction/">服务器环境搭建</a></li>
+</ul>
+  
+</li>
+
+<li class="parent"><a href="https://example.com/how-toad-ocr-work/">Toad Ocr 如何运作</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/how-toad-ocr-work/persistence/">神经网络权重持久化与恢复</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/visualize/">图像可视化</a></li>
+<li class="active"><a href="https://example.com/how-toad-ocr-work/data-load/">数据集加载</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/zca/">对图像进行ZCA白化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/cnn/">卷积神经网络</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/snn/">脉冲神经网络</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_SVG"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[\[','\]\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+</div>
+</body>
+</html>

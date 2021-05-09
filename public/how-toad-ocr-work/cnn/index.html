@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>卷积神经网络 - Toad OCR</title>
+<meta name="description" content="Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站">
+<meta name="generator" content="Hugo 0.83.0" />
+<link href="https://example.com/index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://example.com/how-toad-ocr-work/cnn/">
+<link rel="stylesheet" href="https://example.com/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://example.com/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script src="https://example.com/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="卷积神经网络" />
+<meta property="og:description" content="卷积神经网络 Convolutional Neural Network ​ ToadOCREngine 使用两种神经网络完成手写体字符集识别，本章对卷积神经网络的实现进行介绍 一、卷积神经网络 ​ 对于一张手写体字符图像而言，需" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/how-toad-ocr-work/cnn/" /><meta property="og:image" content="https://example.com/images/og-image.png"/><meta property="article:section" content="how-toad-ocr-work" />
+<meta property="article:published_time" content="2021-05-07T17:57:23&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-07T17:57:23&#43;08:00" /><meta property="og:site_name" content="Hugo Techdoc Theme" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/images/og-image.png"/>
+
+<meta name="twitter:title" content="卷积神经网络"/>
+<meta name="twitter:description" content="卷积神经网络 Convolutional Neural Network ​ ToadOCREngine 使用两种神经网络完成手写体字符集识别，本章对卷积神经网络的实现进行介绍 一、卷积神经网络 ​ 对于一张手写体字符图像而言，需"/>
+<meta itemprop="name" content="卷积神经网络">
+<meta itemprop="description" content="卷积神经网络 Convolutional Neural Network ​ ToadOCREngine 使用两种神经网络完成手写体字符集识别，本章对卷积神经网络的实现进行介绍 一、卷积神经网络 ​ 对于一张手写体字符图像而言，需"><meta itemprop="datePublished" content="2021-05-07T17:57:23&#43;08:00" />
+<meta itemprop="dateModified" content="2021-05-07T17:57:23&#43;08:00" />
+<meta itemprop="wordCount" content="2709"><meta itemprop="image" content="https://example.com/images/og-image.png"/>
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
+<p class="description">Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站</p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/getting-start/">快速开始</a></li>
+<li><a href="/tutorials/">使用讲解</a></li>
+<li><a href="/about/">关于</a></li>
+<li class="active"><a href="/how-toad-ocr-work/">Toad Ocr 如何运作</a></li>
+<li><a href="/distributed-cluster/">分布式集群</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>卷积神经网络</h1>
+<h1 id="卷积神经网络-convolutional-neural-network">卷积神经网络 Convolutional Neural Network</h1>
+<p>​	ToadOCREngine 使用两种神经网络完成手写体字符集识别，本章对卷积神经网络的实现进行介绍</p>
+<h2 id="一卷积神经网络">一、卷积神经网络</h2>
+<p>​	对于一张手写体字符图像而言，需要检测图像中的特征来决定图像所属的字符类别，通常情况下这些特征都不是由整张图像来决定的，而是由一些局部的区域来决定的。这就是局部性</p>
+<p>​	对于不同的图像，如果它们具有同样的特征，这些特征会出现在图像的不同位置，也就是说可以用同样的检测模式去检测不同图像的相同特征，只不过这些特征处于图像中的不同位置，但是特征检测所做的操作几乎一样。这就是相同性</p>
+<p>​	对于一张大图像，如果我们进行下采样，那么图像的性质基本保持不变。这就是不变性。ToadOCR使用EMNIST数据集，对于28 * 28 的数据下采样方面的优点并未直观体现。</p>
+<p>​	在处理图像时，让每一个神经元都与那个层中的所有神经元进行全连接是不现实。相反，让每个神经元只与输入数据的一个局部区域连接时可行的。其实这是因为图片特征的局部性，所以只需要通过局部就能提取出相应的特征。</p>
+<p>​	与神经元连接的空间大小叫做神经元的感受野，它的大小是一个认为设置的超参数，这其实就是滤波器的宽和高。在深度方向上，大小总是和图片的深度一致。</p>
+<p>​	池化层，为的是逐渐降低数据体的空间尺寸，这样就能够减少网络中的参数量，减少计算资源耗费，同时也能够有效地控制过拟合。ToadOCREngine采取的是3 * 3的小滤波器。</p>
+<p>ToadOCREngine采取三层卷积(权重矩阵W0、W1、W2)一层全链接（权重矩阵W3）一层输出（权重矩阵W4）的结构，Out中保存每次的输出解码结果， OutVal为Out的数据张量指针，保证Out改变时上次预测结果不被gc回收。</p>
+<h3 id="1神经网络设计">1、神经网络设计</h3>
+<ul>
+<li>
+<p>卷积神经网络结构设计代码</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// CNN 四层卷积神经网络
+</span><span style="color:#75715e">// 卷积层表达式DropOut(MaxPoll(\sigma(w*x)))
+</span><span style="color:#75715e">// 退出与最大池化为同一层
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">CNN</span> <span style="color:#66d9ef">struct</span> {
+	<span style="color:#a6e22e">G</span>	<span style="color:#f92672">*</span><span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">ExprGraph</span>				<span style="color:#75715e">// 语法数学表达式图（可重用节点的AST）
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">W0</span>, <span style="color:#a6e22e">W1</span>, <span style="color:#a6e22e">W2</span>, <span style="color:#a6e22e">W3</span>, <span style="color:#a6e22e">W4</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Node</span>	<span style="color:#75715e">// 各层权重
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">D0</span>, <span style="color:#a6e22e">D1</span>, <span style="color:#a6e22e">D2</span>, <span style="color:#a6e22e">D3</span> <span style="color:#66d9ef">float64</span>				<span style="color:#75715e">// 退出概率
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">Out</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Node</span>
+	<span style="color:#a6e22e">OutVal</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Value</span>
+	<span style="color:#a6e22e">VM</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">VM</span>
+	<span style="color:#a6e22e">TrainEpoch</span> <span style="color:#66d9ef">int</span>
+	<span style="color:#a6e22e">Lock</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">Mutex</span>
+}
+</code></pre></div></li>
+</ul>
+<h3 id="2神经网络创建">2、神经网络创建</h3>
+<p>​	神经网络创建主要实现对权重矩阵的初始化。对于前三层20%的激活归零，对于最后一层，希望55%的激活归零。这是卷积神经网络的惯用值，人为制造信息瓶颈，使得卷积圣经网络网络可以学习到真正重要的特征。</p>
+<pre><code>滤波器大小3 * 3 ，3 * 3是最通用的滤波器大小。
+</code></pre>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// NewCNN 新建卷积神经网络
+</span><span style="color:#75715e">// w0 第0层权重(32, 1, 3, 3) 批次数（滤波器数量）32 颜色通道1（灰度图） 滤波器大小3 * 3
+</span><span style="color:#75715e">// 卷积层改变了输入形状下方第1层与第2层的形状要根据上一层输出进行修改
+</span><span style="color:#75715e">// w1 第1层权重(64, 32, 3, 3)
+</span><span style="color:#75715e">// w2 第2层权重(128, 64, 3, 3)
+</span><span style="color:#75715e">// 第2层将输出一个秩为4的张量，为了方便执行乘法在第3层将其重构为一个秩为2的张量
+</span><span style="color:#75715e">// w3 第3层权重(128 * 3 * 3, 625)
+</span><span style="color:#75715e">// 第4层进行输出解码得到结果概率
+</span><span style="color:#75715e">// w4 第4层权重(625, 62)
+</span><span style="color:#75715e">// d0～d3前三层20%的激活随机归零,最后一层55%的激活随机归零
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 入参
+</span><span style="color:#75715e">//	g *gorgonia.ExprGraph	// 语法数学表达式图(可重用节点的AST)
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 返回
+</span><span style="color:#75715e">//	*model.CNN				// 卷积神经网络
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewCNN</span>(<span style="color:#a6e22e">g</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">ExprGraph</span>) <span style="color:#f92672">*</span><span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">CNN</span> {
+	<span style="color:#75715e">// w0层权重
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">w0</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewTensor</span>(<span style="color:#a6e22e">g</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Float64</span>, <span style="color:#ae81ff">4</span>,
+		<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithShape</span>(<span style="color:#ae81ff">32</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">3</span>), <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithName</span>(<span style="color:#e6db74">&#34;w0&#34;</span>),
+		<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithInit</span>(<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">GlorotN</span>(<span style="color:#ae81ff">1.0</span>)))
+	<span style="color:#75715e">// w1层权重
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">w1</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewTensor</span>(<span style="color:#a6e22e">g</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Float64</span>, <span style="color:#ae81ff">4</span>,
+		<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithShape</span>(<span style="color:#ae81ff">64</span>, <span style="color:#ae81ff">32</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">3</span>), <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithName</span>(<span style="color:#e6db74">&#34;w1&#34;</span>),
+		<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithInit</span>(<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">GlorotN</span>(<span style="color:#ae81ff">1.0</span>)))
+	<span style="color:#a6e22e">w2</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewTensor</span>(<span style="color:#a6e22e">g</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Float64</span>, <span style="color:#ae81ff">4</span>,
+		<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithShape</span>(<span style="color:#ae81ff">128</span>, <span style="color:#ae81ff">64</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">3</span>), <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithName</span>(<span style="color:#e6db74">&#34;w2&#34;</span>),
+		<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithInit</span>(<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">GlorotN</span>(<span style="color:#ae81ff">1.0</span>)))
+	<span style="color:#a6e22e">w3</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewMatrix</span>(<span style="color:#a6e22e">g</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Float64</span>,
+		<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithShape</span>(<span style="color:#ae81ff">128</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">3</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">625</span>), <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithName</span>(<span style="color:#e6db74">&#34;w3&#34;</span>),
+		<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithInit</span>(<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">GlorotN</span>(<span style="color:#ae81ff">1.0</span>)))
+	<span style="color:#a6e22e">w4</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewMatrix</span>(<span style="color:#a6e22e">g</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Float64</span>,
+		<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithShape</span>(<span style="color:#ae81ff">625</span>, <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">EMNISTByClassNumLabels</span>), <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithName</span>(<span style="color:#e6db74">&#34;w4&#34;</span>),
+		<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithInit</span>(<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">GlorotN</span>(<span style="color:#ae81ff">1.0</span>)))
+	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">CNN</span>{
+		<span style="color:#a6e22e">G</span>: <span style="color:#a6e22e">g</span>,
+		<span style="color:#a6e22e">W0</span>: <span style="color:#a6e22e">w0</span>,
+		<span style="color:#a6e22e">W1</span>: <span style="color:#a6e22e">w1</span>,
+		<span style="color:#a6e22e">W2</span>: <span style="color:#a6e22e">w2</span>,
+		<span style="color:#a6e22e">W3</span>: <span style="color:#a6e22e">w3</span>,
+		<span style="color:#a6e22e">W4</span>: <span style="color:#a6e22e">w4</span>,
+		<span style="color:#a6e22e">D0</span>: <span style="color:#ae81ff">0.2</span>,
+		<span style="color:#a6e22e">D1</span>: <span style="color:#ae81ff">0.2</span>,
+		<span style="color:#a6e22e">D2</span>: <span style="color:#ae81ff">0.2</span>,
+		<span style="color:#a6e22e">D3</span>: <span style="color:#ae81ff">0.55</span>,
+	}
+}
+</code></pre></div><h3 id="3前馈">3、前馈</h3>
+<p>​	前馈，就是数据在神经网络中传播的过程，如果这个过程中没有改变权重矩阵，则是一次预测过程。同理，如果前馈的过程中改变了权重矩阵的内容，则就是一次训练。</p>
+<p>​	上方初始化每层权重的形状根据前馈函数计算得出，因为卷积层会改变输入的形状，ToadOCREngine使用EMNIST数据集，每个图像大小为28 * 28，给定第0层一个(N,1,28,28)的输入。32个3*3滤波器的卷积将会返回一个(N,32,14,14)的输出，经过形状为(2,2)的最大池化下采样后可以将图像长宽减半（总信息量减少1/4），而第1层与第2层与第0层很类似。</p>
+<p>​	第2层输出是一个秩为4的张量，为了完成矩阵乘法进行输出解码，ToadOCREngine将其重新构造为一个秩为2的张量。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// Fwd 前向传播函数
+</span><span style="color:#75715e">// 将图层包装在图层结构中执行每层激活
+</span><span style="color:#75715e">// 第0、1层，使用卷积神经网络的标准卷积stride =（1，1）和padding =（1，1）进行卷积
+</span><span style="color:#75715e">// 给定一个(N,1,28,28)的张量，卷积后得到一个(N,32,28,28)的张量
+</span><span style="color:#75715e">// 最大池化将图像长宽减半(2,2)后输出(M,32,14,14)
+</span><span style="color:#75715e">// 第3曾输出后将结果重构为一个秩为2的张量，使用softmax激活函数完成CNN实现
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 入参
+</span><span style="color:#75715e">//	x *gorgonia.Node	// 输入张量
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 返回
+</span><span style="color:#75715e">//	error				// 错误信息
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">cnn</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">CNN</span>) <span style="color:#a6e22e">Fwd</span> (<span style="color:#a6e22e">x</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Node</span>) <span style="color:#66d9ef">error</span> {
+	<span style="color:#75715e">// 第0层
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">c0</span>, <span style="color:#a6e22e">c1</span>, <span style="color:#a6e22e">c2</span>, <span style="color:#a6e22e">fc</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Node</span>
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">a0</span>, <span style="color:#a6e22e">a1</span>, <span style="color:#a6e22e">a2</span>, <span style="color:#a6e22e">a3</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Node</span>
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">p0</span>, <span style="color:#a6e22e">p1</span>, <span style="color:#a6e22e">p2</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Node</span>
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">l0</span>, <span style="color:#a6e22e">l1</span>, <span style="color:#a6e22e">l2</span>, <span style="color:#a6e22e">l3</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Node</span>
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>
+
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;x:%v&#34;</span>, <span style="color:#a6e22e">x</span>)
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;w0:%v&#34;</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">W0</span>)
+
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">c0</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Conv2d</span>(<span style="color:#a6e22e">x</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">W0</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Shape</span>{<span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">3</span>},
+	[]<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>}, []<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>}, []<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>}); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {	<span style="color:#75715e">// 卷积第0层
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Layer 0 Convolution failed&#34;</span>)	<span style="color:#75715e">// 跟踪错误信息
+</span><span style="color:#75715e"></span>	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">a0</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Rectify</span>(<span style="color:#a6e22e">c0</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {	<span style="color:#75715e">// 第0层激活
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Layer 0 activation failed&#34;</span>)
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">p0</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">MaxPool2D</span>(<span style="color:#a6e22e">a0</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Shape</span>{<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">2</span>}, 	<span style="color:#75715e">// 第0层最大池化
+</span><span style="color:#75715e"></span>	[]<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>}, []<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">2</span>}); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Layer 0 Maxpooling failed&#34;</span>)
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">l0</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Dropout</span>(<span style="color:#a6e22e">p0</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">D0</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {	<span style="color:#75715e">// 第0层概率退出
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Unable to apply a dropout to layer 0&#34;</span>)
+	}
+
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">c1</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Conv2d</span>(<span style="color:#a6e22e">l0</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">W1</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Shape</span>{<span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">3</span>},	<span style="color:#75715e">// 第1层卷积
+</span><span style="color:#75715e"></span>	[]<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>}, []<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>}, []<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>}); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Layer 1 Convolution failed&#34;</span>)
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">a1</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Rectify</span>(<span style="color:#a6e22e">c1</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {	<span style="color:#75715e">// 第1层激活
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Layer 1 activation failed&#34;</span>)
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">p1</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">MaxPool2D</span>(<span style="color:#a6e22e">a1</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Shape</span>{<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">2</span>}, 	<span style="color:#75715e">// 第1层最大池化
+</span><span style="color:#75715e"></span>	[]<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>}, []<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">2</span>}); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Layer 1 Maxpooling failed&#34;</span>)
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">l1</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Dropout</span>(<span style="color:#a6e22e">p1</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">D1</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {		<span style="color:#75715e">// 第1层概率退出
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Unable to apply a dropout to layer 1&#34;</span>)
+	}
+
+
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">c2</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Conv2d</span>(<span style="color:#a6e22e">l1</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">W2</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Shape</span>{<span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">3</span>}, 	<span style="color:#75715e">// 第2层卷积
+</span><span style="color:#75715e"></span>	[]<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>}, []<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>}, []<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>}); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Layer 2 Convolution failed&#34;</span>)
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">a2</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Rectify</span>(<span style="color:#a6e22e">c2</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {	<span style="color:#75715e">// 第2层激活
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Layer 2 activation failed&#34;</span>)
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">p2</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">MaxPool2D</span>(<span style="color:#a6e22e">a2</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Shape</span>{<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">2</span>},	<span style="color:#75715e">// 第2层最大池化
+</span><span style="color:#75715e"></span>	[]<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>}, []<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">2</span>}); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Layer 2 Maxpooling failed&#34;</span>)
+	}
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;p2 shape %v&#34;</span>, <span style="color:#a6e22e">p2</span>.<span style="color:#a6e22e">Shape</span>())
+	<span style="color:#75715e">// 修改第2层张量结构，将输出的秩为4的张量重新构造为秩为2的蟑螂
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">r2</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Node</span>
+	<span style="color:#a6e22e">b</span>, <span style="color:#a6e22e">c</span>, <span style="color:#a6e22e">h</span>, <span style="color:#a6e22e">w</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">p2</span>.<span style="color:#a6e22e">Shape</span>()[<span style="color:#ae81ff">0</span>], <span style="color:#a6e22e">p2</span>.<span style="color:#a6e22e">Shape</span>()[<span style="color:#ae81ff">1</span>], <span style="color:#a6e22e">p2</span>.<span style="color:#a6e22e">Shape</span>()[<span style="color:#ae81ff">2</span>], <span style="color:#a6e22e">p2</span>.<span style="color:#a6e22e">Shape</span>()[<span style="color:#ae81ff">3</span>]
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">r2</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Reshape</span>(<span style="color:#a6e22e">p2</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Shape</span>{<span style="color:#a6e22e">b</span>, <span style="color:#a6e22e">c</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">h</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">w</span>}); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Unable to reshape layer 2&#34;</span>)
+	}
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;r2 shape %v&#34;</span>, <span style="color:#a6e22e">r2</span>.<span style="color:#a6e22e">Shape</span>())
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">l2</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Dropout</span>(<span style="color:#a6e22e">r2</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">D2</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {	<span style="color:#75715e">// 第2层概率退出
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrap</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Unable to apply a dropout on layer 2&#34;</span>)
+	}
+	<span style="color:#a6e22e">_</span> = <span style="color:#a6e22e">ioutil</span>.<span style="color:#a6e22e">WriteFile</span>(<span style="color:#e6db74">&#34;output/tmp.dot&#34;</span>, []byte(<span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">G</span>.<span style="color:#a6e22e">ToDot</span>()), <span style="color:#ae81ff">0644</span>)
+	<span style="color:#75715e">// 第3层
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">fc</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Mul</span>(<span style="color:#a6e22e">l2</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">W3</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrapf</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Unable to multiply l2 and w3&#34;</span>)
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">a3</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Rectify</span>(<span style="color:#a6e22e">fc</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {	<span style="color:#75715e">// 第3层激活
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrapf</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Unable to activate fc&#34;</span>)
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">l3</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Dropout</span>(<span style="color:#a6e22e">a3</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">D3</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {	<span style="color:#75715e">// 第3层概率退出
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrapf</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Unable to apply a dropout on layer 3&#34;</span>)
+	}
+	<span style="color:#75715e">// 输出解码
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">out</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Node</span>
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">out</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Mul</span>(<span style="color:#a6e22e">l3</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">W4</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">Wrapf</span>(<span style="color:#a6e22e">err</span>, <span style="color:#e6db74">&#34;Unable to multiply l3 and w4&#34;</span>)
+	}
+	<span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">Out</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">SoftMax</span>(<span style="color:#a6e22e">out</span>)	<span style="color:#75715e">// 使用softmax 函数进行激活
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Read</span>(<span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">Out</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">OutVal</span>)		<span style="color:#75715e">// 保存预测结果
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><h3 id="4训练步骤">4、训练步骤</h3>
+<p>使用命令</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ ./toad_ocr_engine train cnn
+</code></pre></div><p>对卷积神经网络进行训练</p>
+<ol>
+<li>加载EMNIST数据集byclass图像与标签的训练集和测试集
+<ol>
+<li>加载图像</li>
+<li>图像进行像素压缩算法</li>
+<li>转换图像为张量</li>
+<li>加载标签</li>
+<li>转换标签为张量</li>
+</ol>
+</li>
+<li>根据持久化的权重文件是否存在决定恢复网络或创建新的网络</li>
+<li>生成成本切片，使用本地迭代器对网络进行训练，训练过程中跟踪成本</li>
+<li>完成训练后对权重矩阵进行持久化</li>
+<li>使用测试集进行交叉验证</li>
+</ol>
+<h3 id="5准确率">5、准确率</h3>
+<p>当前ToadOCREngine卷积神经网络训练使用EMNIST数据集byclass，训练Epoch200+ 准确率40%</p>
+<div class="edit-meta">
+Last updated on 7 May 2021
+
+
+<br>
+Published on 7 May 2021
+<br><a href="https://github.com/suvvm/ToadOCRDocument/edit/master/content/how-toad-ocr-work/cnn.md" class="edit-page"><i class="fas fa-pen-square"></i>&nbsp;Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://example.com/how-toad-ocr-work/zca/" title="对图像进行ZCA白化"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - 对图像进行ZCA白化</a>
+<a class="nav nav-next" href="https://example.com/how-toad-ocr-work/snn/" title="脉冲神经网络">Next - 脉冲神经网络 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://example.com">Home</a></li>
+
+<li class=""><a href="https://example.com/getting-start/">快速开始</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/getting-start/use-http-client/">使用Toad OCR http客户端</a></li>
+<li class=""><a href="https://example.com/getting-start/contribut-doc/">为开源文档做贡献</a></li>
+<li class=""><a href="https://example.com/getting-start/tags-map/">标签对照</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/tutorials/">使用讲解</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/tutorials/install-dependencies/">服务器环境搭建</a></li>
+<li class=""><a href="https://example.com/tutorials/use-client/">使用RPC客户端</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/about/">关于</a>
+  
+</li>
+
+<li class=""><a href="https://example.com/distributed-cluster/">分布式集群</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/distributed-cluster/etcd-register-resolver/">Etcd gRPC 服务注册与服务发现</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/cluster-construction/">集群搭建</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/">图像预处理服务部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-engine-server/">OCR识别服务节点部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/proxy-china/">中国大陆服务器代理</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/environment-construction/">服务器环境搭建</a></li>
+</ul>
+  
+</li>
+
+<li class="parent"><a href="https://example.com/how-toad-ocr-work/">Toad Ocr 如何运作</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/how-toad-ocr-work/persistence/">神经网络权重持久化与恢复</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/visualize/">图像可视化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/data-load/">数据集加载</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/zca/">对图像进行ZCA白化</a></li>
+<li class="active"><a href="https://example.com/how-toad-ocr-work/cnn/">卷积神经网络</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/snn/">脉冲神经网络</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_SVG"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[\[','\]\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+</div>
+</body>
+</html>

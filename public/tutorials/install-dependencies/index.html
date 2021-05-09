@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>服务器环境搭建 - Toad OCR</title>
+<meta name="description" content="Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站">
+<meta name="generator" content="Hugo 0.83.0" />
+<link href="https://example.com/index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://example.com/tutorials/install-dependencies/">
+<link rel="stylesheet" href="https://example.com/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://example.com/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script src="https://example.com/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="服务器环境搭建" />
+<meta property="og:description" content="服务器环境搭建 Install Dependencies 一、安装gRPC依赖 1、go 拥有Go三个最新发行版中的任何一个，有关安装说明请参考Go Getting Start 指导。 拥有可以使用的protob" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/tutorials/install-dependencies/" /><meta property="og:image" content="https://example.com/images/og-image.png"/><meta property="article:section" content="tutorials" />
+<meta property="article:published_time" content="2021-05-04T16:35:56&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-04T16:35:56&#43;08:00" /><meta property="og:site_name" content="Hugo Techdoc Theme" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/images/og-image.png"/>
+
+<meta name="twitter:title" content="服务器环境搭建"/>
+<meta name="twitter:description" content="服务器环境搭建 Install Dependencies 一、安装gRPC依赖 1、go 拥有Go三个最新发行版中的任何一个，有关安装说明请参考Go Getting Start 指导。 拥有可以使用的protob"/>
+<meta itemprop="name" content="服务器环境搭建">
+<meta itemprop="description" content="服务器环境搭建 Install Dependencies 一、安装gRPC依赖 1、go 拥有Go三个最新发行版中的任何一个，有关安装说明请参考Go Getting Start 指导。 拥有可以使用的protob"><meta itemprop="datePublished" content="2021-05-04T16:35:56&#43;08:00" />
+<meta itemprop="dateModified" content="2021-05-04T16:35:56&#43;08:00" />
+<meta itemprop="wordCount" content="1121"><meta itemprop="image" content="https://example.com/images/og-image.png"/>
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
+<p class="description">Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站</p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/getting-start/">快速开始</a></li>
+<li class="active"><a href="/tutorials/">使用讲解</a></li>
+<li><a href="/about/">关于</a></li>
+<li><a href="/how-toad-ocr-work/">Toad Ocr 如何运作</a></li>
+<li><a href="/distributed-cluster/">分布式集群</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>服务器环境搭建</h1>
+<h1 id="服务器环境搭建-install-dependencies">服务器环境搭建 Install Dependencies</h1>
+<h2 id="一安装grpc依赖">一、安装gRPC依赖</h2>
+<h3 id="1go">1、go</h3>
+<ul>
+<li>
+<p>拥有Go三个最新发行版中的任何一个，有关安装说明请参考<a href="https://golang.org/doc/install">Go Getting Start</a> 指导。</p>
+</li>
+<li>
+<p>拥有可以使用的<a href="https://developers.google.com/protocol-buffers">protobuf</a>编译器，protoc，<a href="https://developers.google.com/protocol-buffers/docs/proto3">第3版</a>。有关安装说明，请参阅<a href="https://grpc.io/docs/protoc-installation/">protobuf编译器安装</a>。</p>
+</li>
+<li>
+<p>用于协议编译器的<strong>Go插件</strong>：</p>
+<ol>
+<li>
+<p>使用以下命令为Go安装proto编译器插件：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">export GO111MODULE<span style="color:#f92672">=</span>on  <span style="color:#75715e"># Enable module mode</span>
+go get google.golang.org/protobuf/cmd/protoc-gen-go <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>         google.golang.org/grpc/cmd/protoc-gen-go-grpc
+</code></pre></div></li>
+<li>
+<p>更新您的环境变量以便protoc编译器可以找到插件：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">export PATH<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$PATH<span style="color:#e6db74">:</span>$GOPATH<span style="color:#e6db74">/bin&#34;</span>
+</code></pre></div></li>
+</ol>
+</li>
+</ul>
+<h3 id="2c">2、C++</h3>
+<p>​	C ++没有通用管理项目依赖项的标准。在构建和运行此快速入门的Ping Pong示例之前，您需要构建并安装gRPC。</p>
+<p>​	构建和本地安装gRPC和协议缓冲区使用<code>cmake</code>。如果您愿意使用<a href="https://www.bazel.build/">bazel</a>，请参阅<a href="https://github.com/grpc/grpc/blob/master/BUILDING.md#build-from-source">从源代码构建</a>。</p>
+<ul>
+<li>
+<p>安装cmake</p>
+<ul>
+<li>
+<p>mac</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ brew install cmake
+</code></pre></div></li>
+<li>
+<p>linux</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ sudo apt install -y cmake
+</code></pre></div></li>
+</ul>
+<p>检查版本：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ cmake --version
+cmake version 3.19.6
+</code></pre></div></li>
+<li>
+<p>安装其他工具</p>
+<ul>
+<li>
+<p>Linux</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ sudo apt install -y build-essential autoconf libtool pkg-config
+</code></pre></div></li>
+<li>
+<p>Mac：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ brew install autoconf automake libtool pkg-config
+</code></pre></div></li>
+</ul>
+</li>
+<li>
+<p>克隆grpc仓库</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ git clone --recurse-submodules -b v1.35.0 https://github.com/grpc/grpc
+</code></pre></div></li>
+<li>
+<p>构建并本地安装gRPC，protobuf和Abseil：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ cd grpc
+$ mkdir -p cmake/build
+$ pushd cmake/build
+$ cmake -DgRPC_INSTALL<span style="color:#f92672">=</span>ON <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>      -DgRPC_BUILD_TESTS<span style="color:#f92672">=</span>OFF <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>      -DCMAKE_INSTALL_PREFIX<span style="color:#f92672">=</span>$MY_INSTALL_DIR <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>      ../..
+$ make -j
+$ make install
+$ popd
+$ mkdir -p third_party/abseil-cpp/cmake/build
+$ pushd third_party/abseil-cpp/cmake/build
+$ cmake -DCMAKE_INSTALL_PREFIX<span style="color:#f92672">=</span>$MY_INSTALL_DIR <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>      -DCMAKE_POSITION_INDEPENDENT_CODE<span style="color:#f92672">=</span>TRUE <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>      ../..
+$ make -j
+$ make install
+$ popd
+</code></pre></div></li>
+</ul>
+<h3 id="3java">3、Java</h3>
+<ul>
+<li>
+<p>安装<a href="https://jdk.java.net/">JDK</a> 7或更高版本</p>
+</li>
+<li>
+<p>maven</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;dependency&gt;</span>
+    <span style="color:#f92672">&lt;groupId&gt;</span>io.grpc<span style="color:#f92672">&lt;/groupId&gt;</span>
+    <span style="color:#f92672">&lt;artifactId&gt;</span>grpc-all<span style="color:#f92672">&lt;/artifactId&gt;</span>
+    <span style="color:#f92672">&lt;version&gt;</span>1.26.0<span style="color:#f92672">&lt;/version&gt;</span>
+<span style="color:#f92672">&lt;/dependency&gt;</span>
+</code></pre></div></li>
+<li>
+<p>gradle</p>
+<pre><code>protobuf {
+    protoc {
+        artifact = &quot;com.google.protobuf:protoc:3.2.0&quot;
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.4.0'
+        }
+    }
+
+    generatedFilesBaseDir = &quot;src&quot;
+
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {
+                outputSubDir = &quot;java&quot;
+            }
+        }
+    }
+}
+</code></pre></li>
+</ul>
+<h3 id="4python">4、Python</h3>
+<ul>
+<li>
+<p>Python 3.5或更高版本</p>
+</li>
+<li>
+<p>pip 版本9.0.1或更高</p>
+</li>
+<li>
+<p>安装gRPC：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ python -m pip install grpcio
+</code></pre></div></li>
+<li>
+<p>gRPC工具protobuf protoc</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ python -m pip install grpcio-tools
+</code></pre></div></li>
+</ul>
+<h2 id="二etcd-client-v3">二、Etcd Client v3</h2>
+<p>ToadOCR与Etcd的交互使用官方提供的etcd v3客户端包。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ go get -u -v go.etcd.io/etcd/clientv3
+</code></pre></div><p>​	但是当前etcd v3客户端的开发相对grpc略有滞后，且社区开发人员毫无干劲，积攒了巨量的issue没有处理，且对v3.5的发布日期来回扯皮详见https://github.com/etcd-io/etcd/issues/12330，所以当前clientv3对应相对稳定的gRPC版本为v1.26.0，若使用当前v1.3x.x会出现调用移除方法和generate代码变量名称不匹配的情况，需要手动对源码进行修改，得不偿失，所以可以考虑在go mod依赖管理中将gRPC版本限制为v1.26.0</p>
+<pre><code>replace (
+	google.golang.org/grpc =&gt; google.golang.org/grpc v1.26.0
+)
+</code></pre><h2 id="三gorgonia">三、Gorgonia</h2>
+<p>​	ToadOCR为了方便进行数学运算，使用了gorgonia的张量与语法数学表达式图（可重用节点的AST）</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ go get gorgonia.org/gorgonia
+</code></pre></div><h2 id="四gocv">四、GoCV</h2>
+<p>​	GoCV为<a href="http://opencv.org/">OpenCV 4</a>计算机视觉库提供了Go语言绑定。GoCV软件包在Linux，macOS和Windows上支持Go和OpenCV v4.5.1的最新版本。在获取GoCV前请确保已经完成了OpenCV相关配置。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ go get -u -d gocv.io/x/gocv
+</code></pre></div><h4 id="快速安装opencv4">快速安装OpenCV4</h4>
+<p>以下命令应执行所有操作，以在Linux上下载并安装OpenCV 4.5.2：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ cd $GOPATH/src/gocv.io/x/gocv
+$ make install
+</code></pre></div><h3 id="验证安装">验证安装</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ go run ./cmd/version/main.go
+</code></pre></div><p>输出</p>
+<pre><code>gocv version: 0.27.0
+opencv lib version: 4.5.2
+</code></pre><div class="edit-meta">
+Last updated on 4 May 2021
+
+
+<br>
+Published on 4 May 2021
+<br><a href="https://github.com/suvvm/ToadOCRDocument/edit/master/content/tutorials/install-dependencies.md" class="edit-page"><i class="fas fa-pen-square"></i>&nbsp;Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://example.com/tutorials/" title="使用讲解"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - 使用讲解</a>
+<a class="nav nav-next" href="https://example.com/tutorials/use-client/" title="使用RPC客户端">Next - 使用RPC客户端 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://example.com">Home</a></li>
+
+<li class=""><a href="https://example.com/getting-start/">快速开始</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/getting-start/use-http-client/">使用Toad OCR http客户端</a></li>
+<li class=""><a href="https://example.com/getting-start/contribut-doc/">为开源文档做贡献</a></li>
+<li class=""><a href="https://example.com/getting-start/tags-map/">标签对照</a></li>
+</ul>
+  
+</li>
+
+<li class="parent"><a href="https://example.com/tutorials/">使用讲解</a>
+  
+<ul class="sub-menu">
+<li class="active"><a href="https://example.com/tutorials/install-dependencies/">服务器环境搭建</a></li>
+<li class=""><a href="https://example.com/tutorials/use-client/">使用RPC客户端</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/about/">关于</a>
+  
+</li>
+
+<li class=""><a href="https://example.com/distributed-cluster/">分布式集群</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/distributed-cluster/etcd-register-resolver/">Etcd gRPC 服务注册与服务发现</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/cluster-construction/">集群搭建</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/">图像预处理服务部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-engine-server/">OCR识别服务节点部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/proxy-china/">中国大陆服务器代理</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/environment-construction/">服务器环境搭建</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/how-toad-ocr-work/">Toad Ocr 如何运作</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/how-toad-ocr-work/persistence/">神经网络权重持久化与恢复</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/visualize/">图像可视化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/data-load/">数据集加载</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/zca/">对图像进行ZCA白化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/cnn/">卷积神经网络</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/snn/">脉冲神经网络</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_SVG"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[\[','\]\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+</div>
+</body>
+</html>

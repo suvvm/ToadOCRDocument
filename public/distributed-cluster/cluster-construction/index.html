@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>集群搭建 - Toad OCR</title>
+<meta name="description" content="Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站">
+<meta name="generator" content="Hugo 0.83.0" />
+<link href="https://example.com/index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://example.com/distributed-cluster/cluster-construction/">
+<link rel="stylesheet" href="https://example.com/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://example.com/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script src="https://example.com/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="集群搭建" />
+<meta property="og:description" content="集群搭建 Cluster Construction ​ 本章主要表述将多个服务器构建为一个分布式集群的方法。 ToadOCR分布式集群使用ETCD进行搭建。所有操作的前提是完成本章目录" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/distributed-cluster/cluster-construction/" /><meta property="og:image" content="https://example.com/images/og-image.png"/><meta property="article:section" content="distributed-cluster" />
+<meta property="article:published_time" content="2021-05-08T16:58:17&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-08T16:58:17&#43;08:00" /><meta property="og:site_name" content="Hugo Techdoc Theme" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/images/og-image.png"/>
+
+<meta name="twitter:title" content="集群搭建"/>
+<meta name="twitter:description" content="集群搭建 Cluster Construction ​ 本章主要表述将多个服务器构建为一个分布式集群的方法。 ToadOCR分布式集群使用ETCD进行搭建。所有操作的前提是完成本章目录"/>
+<meta itemprop="name" content="集群搭建">
+<meta itemprop="description" content="集群搭建 Cluster Construction ​ 本章主要表述将多个服务器构建为一个分布式集群的方法。 ToadOCR分布式集群使用ETCD进行搭建。所有操作的前提是完成本章目录"><meta itemprop="datePublished" content="2021-05-08T16:58:17&#43;08:00" />
+<meta itemprop="dateModified" content="2021-05-08T16:58:17&#43;08:00" />
+<meta itemprop="wordCount" content="1088"><meta itemprop="image" content="https://example.com/images/og-image.png"/>
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
+<p class="description">Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站</p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/getting-start/">快速开始</a></li>
+<li><a href="/tutorials/">使用讲解</a></li>
+<li><a href="/about/">关于</a></li>
+<li><a href="/how-toad-ocr-work/">Toad Ocr 如何运作</a></li>
+<li class="active"><a href="/distributed-cluster/">分布式集群</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>集群搭建</h1>
+<h1 id="集群搭建-cluster-construction">集群搭建 Cluster Construction</h1>
+<p>​	本章主要表述将多个服务器构建为一个分布式集群的方法。</p>
+<p>ToadOCR分布式集群使用ETCD进行搭建。所有操作的前提是完成本章目录下的环境搭建部分。</p>
+<h2 id="一什么是etcd">一、什么是ETCD</h2>
+<p>​	etcd是一个高度一致的分布式键值存储，它提供了一种可靠的方式来存储需要由分布式系统或机器集群访问的数据。它可以优雅地处理网络分区期间的leader选举，即使在leader节点中也可以容忍机器故障。etcd 内部采用<code>raft</code>协议作为一致性算法，etcd 基于 Go 语言实现。</p>
+<h2 id="二集群leader">二、集群leader</h2>
+<p>​	leader是通过选举而产生的处理所有数据提交的节点。假设三个节点的集群，三个节点上均运行 Timer（每个 Timer 持续时间是随机的），Raft算法使用随机 Timer 来初始化 Leader 选举流程，第一个节点率先完成了 Timer，随后它就会向其他两个节点发送成为 Leader 的请求，其他节点接收到请求后会以投票回应然后第一个节点被选举为 Leader。</p>
+<p>​	成为 Leader 后，该节点会以固定时间间隔向其他节点发送通知，确保自己仍是Leader。有些情况下当 Follower 们收不到 Leader 的通知后，比如说 Leader 节点宕机或者失去了连接，其他节点会重复之前选举过程选举出新的 Leader。</p>
+<h3 id="创建集群并添加当前节点">创建集群并添加当前节点</h3>
+<ul>
+<li>进入或创建目录/etc/etcd/</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ sudo mkdir /etc/etcd/
+$ cd /etc/etcd/
+</code></pre></div><ul>
+<li>创建配置文件etcd.yml</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ vim etcd.yml
+</code></pre></div><ul>
+<li>编辑配置文件</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">etcd_toad_ocr														# 节点名称</span>
+<span style="color:#f92672">data-dir</span>: <span style="color:#ae81ff">/var/lib/etcd/default.etcd					# 数据文件存储地址</span>
+<span style="color:#f92672">listen-client-urls</span>: <span style="color:#ae81ff">http://0.0.0.0:2379				# 对外提供服务的地址</span>
+<span style="color:#f92672">advertise-client-urls</span>: <span style="color:#ae81ff">http://{your ipv4 host}:2379,http://localhost:2379	# 此节点客户端URL列表，会通告群集的其余节点</span>
+<span style="color:#f92672">listen-peer-urls</span>: <span style="color:#ae81ff">http://0.0.0.0:2380					# 与集群内其他成员之间的通信地址</span>
+<span style="color:#f92672">initial-advertise-peer-urls</span>: <span style="color:#ae81ff">http://{your ipv4 host}:2380</span> <span style="color:#75715e"># 当前节点对等URL地址，会通告群集的其余节点</span>
+<span style="color:#f92672">initial-cluster</span>: <span style="color:#ae81ff">etcd_toad_ocr=http://{your ipv4 host}:2380,etcd_toad_ocr_1=http://{other ipv4 host}:2380,etcd_toad_ocr_2=http://{other ipv4 host}:2380,...						</span> <span style="color:#75715e"># 集群中所有节点的信息</span>
+<span style="color:#f92672">initial-cluster-token</span>: <span style="color:#ae81ff">etcd_toad_ocr_cluster	# 当前集群的唯一token</span>
+<span style="color:#f92672">initial-cluster-state</span>: <span style="color:#ae81ff">new										# 初始集群状态</span>
+</code></pre></div><ul>
+<li>启动etcd</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ etcd --config-file /etc/etcd/etcd.yml
+</code></pre></div><p>当前配置会创建一个token为etcd_toad_ocr_cluster的新集群，创建后选举当前节点为leader并尝试联络其他节点。</p>
+<h2 id="三集群member">三、集群member</h2>
+<h3 id="创建新节点并尝试加入leader所在集群">创建新节点并尝试加入leader所在集群</h3>
+<ul>
+<li>进入或创建目录/etc/etcd/</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ sudo mkdir /etc/etcd/
+$ cd /etc/etcd/
+</code></pre></div><ul>
+<li>创建配置文件etcd.yml</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ vim etcd.yml
+</code></pre></div><ul>
+<li>编辑配置文件</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">etcd_toad_ocr_1													# 节点名称</span>
+<span style="color:#f92672">data-dir</span>: <span style="color:#ae81ff">/var/lib/etcd/default.etcd					# 数据文件存储地址</span>
+<span style="color:#f92672">listen-client-urls</span>: <span style="color:#ae81ff">http://0.0.0.0:2379				# 对外提供服务的地址</span>
+<span style="color:#f92672">advertise-client-urls</span>: <span style="color:#ae81ff">http://{your ipv4 host}:2379,http://localhost:2379	# 此节点客户端URL列表，会通告群集的其余节点</span>
+<span style="color:#f92672">listen-peer-urls</span>: <span style="color:#ae81ff">http://0.0.0.0:2380					# 与集群内其他成员之间的通信地址</span>
+<span style="color:#f92672">initial-advertise-peer-urls</span>: <span style="color:#ae81ff">http://{your ipv4 host}:2380</span> <span style="color:#75715e"># 当前节点对等URL地址，会通告群集的其余节点</span>
+<span style="color:#f92672">initial-cluster</span>: <span style="color:#ae81ff">etcd_toad_ocr=http://{leader ipv4 host}:2380,etcd_toad_ocr_1=http://{your ipv4 host}:2380,etcd_toad_ocr_2=http://{other ipv4 host}:2380,...						</span> <span style="color:#75715e"># 集群中所有节点的信息</span>
+<span style="color:#f92672">initial-cluster-token</span>: <span style="color:#ae81ff">etcd_toad_ocr_cluster	# 当前集群的唯一token</span>
+<span style="color:#f92672">initial-cluster-state</span>: <span style="color:#ae81ff">existing								# 初始集群状态</span>
+</code></pre></div><ul>
+<li>启动etcd</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ etcd --config-file /etc/etcd/etcd.yml
+</code></pre></div><p>​	当前配置会创建一个名为为etcd_toad_ocr_1的节点，创建后尝试加入集群etcd_toad_ocr_cluster并联络其他节点。</p>
+<p><strong>重复上述步骤直至所有节点加入目标集群。</strong></p>
+<div class="edit-meta">
+Last updated on 8 May 2021
+
+
+<br>
+Published on 8 May 2021
+<br><a href="https://github.com/suvvm/ToadOCRDocument/edit/master/content/distributed-cluster/cluster-construction.md" class="edit-page"><i class="fas fa-pen-square"></i>&nbsp;Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://example.com/distributed-cluster/etcd-register-resolver/" title="Etcd gRPC 服务注册与服务发现"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - Etcd gRPC 服务注册与服务发现</a>
+<a class="nav nav-next" href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/" title="图像预处理服务部署">Next - 图像预处理服务部署 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://example.com">Home</a></li>
+
+<li class=""><a href="https://example.com/getting-start/">快速开始</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/getting-start/use-http-client/">使用Toad OCR http客户端</a></li>
+<li class=""><a href="https://example.com/getting-start/contribut-doc/">为开源文档做贡献</a></li>
+<li class=""><a href="https://example.com/getting-start/tags-map/">标签对照</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/tutorials/">使用讲解</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/tutorials/install-dependencies/">服务器环境搭建</a></li>
+<li class=""><a href="https://example.com/tutorials/use-client/">使用RPC客户端</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/about/">关于</a>
+  
+</li>
+
+<li class="parent"><a href="https://example.com/distributed-cluster/">分布式集群</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/distributed-cluster/etcd-register-resolver/">Etcd gRPC 服务注册与服务发现</a></li>
+<li class="active"><a href="https://example.com/distributed-cluster/cluster-construction/">集群搭建</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/">图像预处理服务部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-engine-server/">OCR识别服务节点部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/proxy-china/">中国大陆服务器代理</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/environment-construction/">服务器环境搭建</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/how-toad-ocr-work/">Toad Ocr 如何运作</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/how-toad-ocr-work/persistence/">神经网络权重持久化与恢复</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/visualize/">图像可视化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/data-load/">数据集加载</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/zca/">对图像进行ZCA白化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/cnn/">卷积神经网络</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/snn/">脉冲神经网络</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_SVG"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[\[','\]\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+</div>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Etcd gRPC 服务注册与服务发现 - Toad OCR</title>
+<meta name="description" content="Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站">
+<meta name="generator" content="Hugo 0.83.0" />
+<link href="https://example.com/index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://example.com/distributed-cluster/etcd-register-resolver/">
+<link rel="stylesheet" href="https://example.com/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://example.com/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script src="https://example.com/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="Etcd gRPC 服务注册与服务发现" />
+<meta property="og:description" content="Etcd gRPC 服务注册与服务发现 Etcd gRPC Register Resolver 本章主要介绍了ToadOCR中gRPC使用Etcd集群做负载均衡，服务注册与服务发现逻辑。 零、理论介绍 ​ 在开始" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/distributed-cluster/etcd-register-resolver/" /><meta property="og:image" content="https://example.com/images/og-image.png"/><meta property="article:section" content="distributed-cluster" />
+<meta property="article:published_time" content="2021-05-08T21:16:00&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-08T21:16:00&#43;08:00" /><meta property="og:site_name" content="Hugo Techdoc Theme" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/images/og-image.png"/>
+
+<meta name="twitter:title" content="Etcd gRPC 服务注册与服务发现"/>
+<meta name="twitter:description" content="Etcd gRPC 服务注册与服务发现 Etcd gRPC Register Resolver 本章主要介绍了ToadOCR中gRPC使用Etcd集群做负载均衡，服务注册与服务发现逻辑。 零、理论介绍 ​ 在开始"/>
+<meta itemprop="name" content="Etcd gRPC 服务注册与服务发现">
+<meta itemprop="description" content="Etcd gRPC 服务注册与服务发现 Etcd gRPC Register Resolver 本章主要介绍了ToadOCR中gRPC使用Etcd集群做负载均衡，服务注册与服务发现逻辑。 零、理论介绍 ​ 在开始"><meta itemprop="datePublished" content="2021-05-08T21:16:00&#43;08:00" />
+<meta itemprop="dateModified" content="2021-05-08T21:16:00&#43;08:00" />
+<meta itemprop="wordCount" content="1760"><meta itemprop="image" content="https://example.com/images/og-image.png"/>
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
+<p class="description">Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站</p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/getting-start/">快速开始</a></li>
+<li><a href="/tutorials/">使用讲解</a></li>
+<li><a href="/about/">关于</a></li>
+<li><a href="/how-toad-ocr-work/">Toad Ocr 如何运作</a></li>
+<li class="active"><a href="/distributed-cluster/">分布式集群</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>Etcd gRPC 服务注册与服务发现</h1>
+<h1 id="etcd-grpc-服务注册与服务发现-etcd-grpc-register-resolver">Etcd gRPC 服务注册与服务发现 Etcd gRPC Register Resolver</h1>
+<p>本章主要介绍了ToadOCR中gRPC使用Etcd集群做负载均衡，服务注册与服务发现逻辑。</p>
+<h2 id="零理论介绍">零、理论介绍</h2>
+<p>​	在开始介绍ToadOCR的RPC分布式微服务体系前，先简单的的介绍一下RPC</p>
+<p>​	这里以头条系的微服务体系为例子</p>
+<p>​	RPC就是将服务拆分为不同的可以单独部署的Module，通过一个独立控制中心来控制请求的调度。这里的控制中心指的不是一台机器，而是一个概念。真是状况下控制中心是分布在所有机器上的，这些机器共同组成了维系服务正常运行的集群。通过集群的建立可以更方便的执行下一步诸如负载均衡管理，日志系统设计等等&hellip;</p>
+<p><img src="/images/byte-dance-rpc.png" alt="rpc_byte"></p>
+<p>​	rpc请求单个的生命周期共分为11个部分</p>
+<ul>
+<li>1 request：rpc客户端在完成请求构造后会将请求交给客户端proxy</li>
+<li>2 服务发现：客户端proxy成在拿到请求后会联络rpc控制面也就是分布式集群的控制中心以发现存活的服务端</li>
+<li>3 服务发现：rpc控制面在得到存活的服务端后将节点信息发送给proxy</li>
+<li>4 request：客户端proxy在得到服务端节点信息后将请求交付到服务端的proxy等待调度</li>
+<li>5 request：服务端的proxy将请求交付给服务端</li>
+<li>6 等待调度： 根据当前服务端状态与TCP链接池状态调度建立连接</li>
+<li>7 建立连接： 客户端与服务端建立点对点的链接</li>
+<li>8 执行业务逻辑：服务端根据请求信息分配handler处理具体业务逻辑</li>
+<li>9 responst：服务端将响应交付给服务端proxy</li>
+<li>10 responst：服务端proxy将响应交付为客户端proxy</li>
+<li>11 response： 客户端proxy将响应交付给客户端完成单次请求</li>
+</ul>
+<p><img src="/images/rpc_2.png" alt="rpc_2"></p>
+<p><img src="/images/rpc_1.png" alt="rpc_1"></p>
+<h2 id="一获取依赖">一、获取依赖</h2>
+<ul>
+<li>获取gRPC，详见使用讲解中的环境安装</li>
+<li>获取etcd elient v3 ，详见使用讲解中的环境安装</li>
+</ul>
+<h2 id="二服务注册">二、服务注册</h2>
+<p>​	服务注册：主要思路是创建一个lease，put一个前缀（我们头条系一般将其称为P.S.M Product Service Module）的Key(方便服务发现时根据前缀取key对应的值)；然后通过keepAlive续约，并监听keepAlive通道保持在线，如果不监听，etcd会删除这个lease上的key。</p>
+<h3 id="1服务信息">1、服务信息</h3>
+<ul>
+<li>服务结构设计</li>
+</ul>
+<pre><code>// 服务信息
+type ServiceInfo struct {
+    PSM string
+    IP   string
+}
+// 包含服务信息和etcd参数信息
+type Service struct {
+    ServiceInfo ServiceInfo
+    stop        chan error
+    leaseId     clientv3.LeaseID
+    client      *clientv3.Client
+}
+</code></pre><ul>
+<li>创建一个注册服务</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// NewService 创建一个注册服务
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewService</span>(<span style="color:#a6e22e">info</span> <span style="color:#a6e22e">ServiceInfo</span>, <span style="color:#a6e22e">endpoints</span> []<span style="color:#66d9ef">string</span>) (<span style="color:#a6e22e">service</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Service</span>, <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>) {
+    <span style="color:#a6e22e">client</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">clientv3</span>.<span style="color:#a6e22e">New</span>(<span style="color:#a6e22e">clientv3</span>.<span style="color:#a6e22e">Config</span>{
+        <span style="color:#a6e22e">Endpoints</span>:   <span style="color:#a6e22e">endpoints</span>,
+        <span style="color:#a6e22e">DialTimeout</span>: <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">200</span>,
+    })
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+        <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatal</span>(<span style="color:#a6e22e">err</span>)
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+    }
+    <span style="color:#a6e22e">service</span> = <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">Service</span>{
+        <span style="color:#a6e22e">ServiceInfo</span>: <span style="color:#a6e22e">info</span>,
+        <span style="color:#a6e22e">client</span>:      <span style="color:#a6e22e">client</span>,
+    }
+    <span style="color:#66d9ef">return</span>
+}
+</code></pre></div><h3 id="2注册服务启动">2、注册服务启动</h3>
+<p>​	启动后创建lease然后通过keepAlive续约，并循环监听知道收到终止信号</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// Start 注册服务启动
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">service</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Service</span>) <span style="color:#a6e22e">Start</span>() (<span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>) {
+    <span style="color:#a6e22e">ch</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">keepAlive</span>()
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+        <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatal</span>(<span style="color:#a6e22e">err</span>)
+        <span style="color:#66d9ef">return</span>
+    }
+    <span style="color:#66d9ef">for</span> {
+        <span style="color:#66d9ef">select</span> {
+        <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">stop</span>:
+            <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+        <span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">Ctx</span>().<span style="color:#a6e22e">Done</span>():
+            <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">New</span>(<span style="color:#e6db74">&#34;service closed&#34;</span>)
+        <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">resp</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">ch</span>:
+            <span style="color:#75715e">// 监听lease
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> !<span style="color:#a6e22e">ok</span> {
+                <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;keep alive channel closed&#34;</span>)
+                <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">revoke</span>()
+            }
+            <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Recv reply from service: %s, ttl:%d&#34;</span>, <span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">getKey</span>(), <span style="color:#a6e22e">resp</span>.<span style="color:#a6e22e">TTL</span>)
+        }
+    }
+    <span style="color:#66d9ef">return</span>
+}
+</code></pre></div><h3 id="3保活">3、保活</h3>
+<p>续约lease</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">service</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Service</span>) <span style="color:#a6e22e">keepAlive</span>() (<span style="color:#f92672">&lt;-</span><span style="color:#66d9ef">chan</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">clientv3</span>.<span style="color:#a6e22e">LeaseKeepAliveResponse</span>, <span style="color:#66d9ef">error</span>) {
+    <span style="color:#a6e22e">info</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">ServiceInfo</span>
+    <span style="color:#a6e22e">key</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">info</span>.<span style="color:#a6e22e">PSM</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;/&#34;</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">info</span>.<span style="color:#a6e22e">IP</span>
+    <span style="color:#a6e22e">val</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">json</span>.<span style="color:#a6e22e">Marshal</span>(<span style="color:#a6e22e">info</span>)
+    <span style="color:#75715e">// 创建一个lease
+</span><span style="color:#75715e"></span>    <span style="color:#a6e22e">resp</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">Grant</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">TODO</span>(), <span style="color:#ae81ff">5</span>)
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+        <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatal</span>(<span style="color:#a6e22e">err</span>)
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+    }
+    <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">Put</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">TODO</span>(), <span style="color:#a6e22e">key</span>, string(<span style="color:#a6e22e">val</span>), <span style="color:#a6e22e">clientv3</span>.<span style="color:#a6e22e">WithLease</span>(<span style="color:#a6e22e">resp</span>.<span style="color:#a6e22e">ID</span>))
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+        <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatal</span>(<span style="color:#a6e22e">err</span>)
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+    }
+    <span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">leaseId</span> = <span style="color:#a6e22e">resp</span>.<span style="color:#a6e22e">ID</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">KeepAlive</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">TODO</span>(), <span style="color:#a6e22e">resp</span>.<span style="color:#a6e22e">ID</span>)
+}
+</code></pre></div><h3 id="4关闭">4、关闭</h3>
+<p>​	Stop方法将service.stop 置为nil，Start监听到停止信号执行revoke</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">service</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Service</span>) <span style="color:#a6e22e">Stop</span>() {
+    <span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">stop</span> <span style="color:#f92672">&lt;-</span> <span style="color:#66d9ef">nil</span>
+}
+<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">service</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Service</span>) <span style="color:#a6e22e">revoke</span>() <span style="color:#66d9ef">error</span> {
+    <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">Revoke</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">TODO</span>(), <span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">leaseId</span>)
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+        <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatal</span>(<span style="color:#a6e22e">err</span>)
+    }
+    <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;servide:%s stop\n&#34;</span>, <span style="color:#a6e22e">service</span>.<span style="color:#a6e22e">getKey</span>())
+    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+}
+</code></pre></div><h2 id="三服务发现">三、服务发现</h2>
+<p>服务发现：通过前缀（P.S.M）取出key对应的values；然后启动一个监听服务监听key的变化</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// Resolver 实现grpc的grpc.resolve.Builder接口的Build与Scheme方法
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Resolver</span> <span style="color:#66d9ef">struct</span> {
+    <span style="color:#a6e22e">endpoints</span> []<span style="color:#66d9ef">string</span>
+    <span style="color:#a6e22e">service</span>   <span style="color:#66d9ef">string</span>
+    <span style="color:#a6e22e">cli</span>       <span style="color:#f92672">*</span><span style="color:#a6e22e">clientv3</span>.<span style="color:#a6e22e">Client</span>
+    <span style="color:#a6e22e">cc</span>        <span style="color:#a6e22e">resolver</span>.<span style="color:#a6e22e">ClientConn</span>
+}
+
+<span style="color:#75715e">// service 就是上方的PSM endpoints值得是提供活动的集群端点url 如本项目的http://101.201.70.76:2397
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewResolver</span>(<span style="color:#a6e22e">endpoints</span> []<span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">service</span> <span style="color:#66d9ef">string</span>) <span style="color:#a6e22e">resolver</span>.<span style="color:#a6e22e">Builder</span> {
+    <span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">Resolver</span>{<span style="color:#a6e22e">endpoints</span>: <span style="color:#a6e22e">endpoints</span>, <span style="color:#a6e22e">service</span>: <span style="color:#a6e22e">service</span>}
+}
+
+<span style="color:#75715e">// Scheme return etcd schema
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">r</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Resolver</span>) <span style="color:#a6e22e">Scheme</span>() <span style="color:#66d9ef">string</span> {
+    <span style="color:#75715e">// grpc resolver.Register(r)在注册时，会取scheme，如果一个系统有多个grpc发现，就会覆盖之前注册的
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">schema</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;_&#34;</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">service</span>
+}
+
+<span style="color:#75715e">// ResolveNow
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">r</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Resolver</span>) <span style="color:#a6e22e">ResolveNow</span>(<span style="color:#a6e22e">rn</span> <span style="color:#a6e22e">resolver</span>.<span style="color:#a6e22e">ResolveNowOption</span>) {
+}
+
+<span style="color:#75715e">// Close
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">r</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Resolver</span>) <span style="color:#a6e22e">Close</span>() {
+}
+
+<span style="color:#75715e">// 实现grpc.resolve.Builder接口的方法
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">r</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Resolver</span>) <span style="color:#a6e22e">Build</span>(<span style="color:#a6e22e">target</span> <span style="color:#a6e22e">resolver</span>.<span style="color:#a6e22e">Target</span>, <span style="color:#a6e22e">cc</span> <span style="color:#a6e22e">resolver</span>.<span style="color:#a6e22e">ClientConn</span>, <span style="color:#a6e22e">opts</span> <span style="color:#a6e22e">resolver</span>.<span style="color:#a6e22e">BuildOption</span>) (<span style="color:#a6e22e">resolver</span>.<span style="color:#a6e22e">Resolver</span>, <span style="color:#66d9ef">error</span>) {
+    <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>
+
+    <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">cli</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">clientv3</span>.<span style="color:#a6e22e">New</span>(<span style="color:#a6e22e">clientv3</span>.<span style="color:#a6e22e">Config</span>{
+        <span style="color:#a6e22e">Endpoints</span>: <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">endpoints</span>,
+    })
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;grpclb: create clientv3 client failed: %v&#34;</span>, <span style="color:#a6e22e">err</span>)
+    }
+
+    <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">cc</span> = <span style="color:#a6e22e">cc</span>
+
+    <span style="color:#75715e">// go r.watch(fmt.Sprintf(&#34;/%s/%s/&#34;, schema, r.service))
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">go</span> <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">watch</span>(<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(<span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">service</span>))
+
+    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">r</span>, <span style="color:#66d9ef">nil</span>
+}
+
+<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">r</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Resolver</span>) <span style="color:#a6e22e">watch</span>(<span style="color:#a6e22e">prefix</span> <span style="color:#66d9ef">string</span>) {
+    <span style="color:#a6e22e">addrDict</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">string</span>]<span style="color:#a6e22e">resolver</span>.<span style="color:#a6e22e">Address</span>)
+
+    <span style="color:#a6e22e">update</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">func</span>() {
+        <span style="color:#a6e22e">addrList</span> <span style="color:#f92672">:=</span> make([]<span style="color:#a6e22e">resolver</span>.<span style="color:#a6e22e">Address</span>, <span style="color:#ae81ff">0</span>, len(<span style="color:#a6e22e">addrDict</span>))
+        <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">v</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">addrDict</span> {
+            <span style="color:#a6e22e">addrList</span> = append(<span style="color:#a6e22e">addrList</span>, <span style="color:#a6e22e">v</span>)
+        }
+        <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">cc</span>.<span style="color:#a6e22e">NewAddress</span>(<span style="color:#a6e22e">addrList</span>)
+    }
+
+    <span style="color:#a6e22e">resp</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">cli</span>.<span style="color:#a6e22e">Get</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Background</span>(), <span style="color:#a6e22e">prefix</span>, <span style="color:#a6e22e">clientv3</span>.<span style="color:#a6e22e">WithPrefix</span>())
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+        <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span>, <span style="color:#a6e22e">kv</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">resp</span>.<span style="color:#a6e22e">Kvs</span> {
+            <span style="color:#a6e22e">info</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">ServiceInfo</span>{}
+            <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">json</span>.<span style="color:#a6e22e">Unmarshal</span>([]byte(<span style="color:#a6e22e">kv</span>.<span style="color:#a6e22e">Value</span>), <span style="color:#a6e22e">info</span>)
+            <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+
+            }
+            <span style="color:#a6e22e">addrDict</span>[string(<span style="color:#a6e22e">resp</span>.<span style="color:#a6e22e">Kvs</span>[<span style="color:#a6e22e">i</span>].<span style="color:#a6e22e">Value</span>)] = <span style="color:#a6e22e">resolver</span>.<span style="color:#a6e22e">Address</span>{<span style="color:#a6e22e">Addr</span>: <span style="color:#a6e22e">info</span>.<span style="color:#a6e22e">IP</span>}
+        }
+    }
+
+    <span style="color:#a6e22e">update</span>()
+
+    <span style="color:#a6e22e">rch</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">cli</span>.<span style="color:#a6e22e">Watch</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Background</span>(), <span style="color:#a6e22e">prefix</span>, <span style="color:#a6e22e">clientv3</span>.<span style="color:#a6e22e">WithPrefix</span>(), <span style="color:#a6e22e">clientv3</span>.<span style="color:#a6e22e">WithPrevKV</span>())
+    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">rch</span> {
+        <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">ev</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">n</span>.<span style="color:#a6e22e">Events</span> {
+            <span style="color:#66d9ef">switch</span> <span style="color:#a6e22e">ev</span>.<span style="color:#a6e22e">Type</span> {
+            <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">mvccpb</span>.<span style="color:#a6e22e">PUT</span>:
+                <span style="color:#a6e22e">info</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">ServiceInfo</span>{}
+                <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">json</span>.<span style="color:#a6e22e">Unmarshal</span>([]byte(<span style="color:#a6e22e">ev</span>.<span style="color:#a6e22e">Kv</span>.<span style="color:#a6e22e">Value</span>), <span style="color:#a6e22e">info</span>)
+                <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+                    <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>)
+                } <span style="color:#66d9ef">else</span> {
+                    <span style="color:#a6e22e">addrDict</span>[string(<span style="color:#a6e22e">ev</span>.<span style="color:#a6e22e">Kv</span>.<span style="color:#a6e22e">Key</span>)] = <span style="color:#a6e22e">resolver</span>.<span style="color:#a6e22e">Address</span>{<span style="color:#a6e22e">Addr</span>: <span style="color:#a6e22e">info</span>.<span style="color:#a6e22e">IP</span>}
+                }
+            <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">mvccpb</span>.<span style="color:#a6e22e">DELETE</span>:
+                delete(<span style="color:#a6e22e">addrDict</span>, string(<span style="color:#a6e22e">ev</span>.<span style="color:#a6e22e">PrevKv</span>.<span style="color:#a6e22e">Key</span>))
+            }
+        }
+        <span style="color:#a6e22e">update</span>()
+    }
+}
+</code></pre></div><div class="edit-meta">
+Last updated on 8 May 2021
+
+
+<br>
+Published on 8 May 2021
+<br><a href="https://github.com/suvvm/ToadOCRDocument/edit/master/content/distributed-cluster/etcd-register-resolver.md" class="edit-page"><i class="fas fa-pen-square"></i>&nbsp;Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://example.com/distributed-cluster/" title="分布式集群"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - 分布式集群</a>
+<a class="nav nav-next" href="https://example.com/distributed-cluster/cluster-construction/" title="集群搭建">Next - 集群搭建 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://example.com">Home</a></li>
+
+<li class=""><a href="https://example.com/getting-start/">快速开始</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/getting-start/use-http-client/">使用Toad OCR http客户端</a></li>
+<li class=""><a href="https://example.com/getting-start/contribut-doc/">为开源文档做贡献</a></li>
+<li class=""><a href="https://example.com/getting-start/tags-map/">标签对照</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/tutorials/">使用讲解</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/tutorials/install-dependencies/">服务器环境搭建</a></li>
+<li class=""><a href="https://example.com/tutorials/use-client/">使用RPC客户端</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/about/">关于</a>
+  
+</li>
+
+<li class="parent"><a href="https://example.com/distributed-cluster/">分布式集群</a>
+  
+<ul class="sub-menu">
+<li class="active"><a href="https://example.com/distributed-cluster/etcd-register-resolver/">Etcd gRPC 服务注册与服务发现</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/cluster-construction/">集群搭建</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/">图像预处理服务部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-engine-server/">OCR识别服务节点部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/proxy-china/">中国大陆服务器代理</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/environment-construction/">服务器环境搭建</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/how-toad-ocr-work/">Toad Ocr 如何运作</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/how-toad-ocr-work/persistence/">神经网络权重持久化与恢复</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/visualize/">图像可视化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/data-load/">数据集加载</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/zca/">对图像进行ZCA白化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/cnn/">卷积神经网络</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/snn/">脉冲神经网络</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_SVG"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[\[','\]\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+</div>
+</body>
+</html>

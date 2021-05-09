@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>OCR识别服务节点部署 - Toad OCR</title>
+<meta name="description" content="Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站">
+<meta name="generator" content="Hugo 0.83.0" />
+<link href="https://example.com/index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://example.com/distributed-cluster/toad-ocr-engine-server/">
+<link rel="stylesheet" href="https://example.com/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://example.com/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script src="https://example.com/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="OCR识别服务节点部署" />
+<meta property="og:description" content="OCR识别服务节点部署 Toad Ocr Engine Server 本章主要表述将Toad OCR Engine 图像识别添加为集群中的RPC服务的方法。 ToadOCR分布式集群使用ETCD进行搭建" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/distributed-cluster/toad-ocr-engine-server/" /><meta property="og:image" content="https://example.com/images/og-image.png"/><meta property="article:section" content="distributed-cluster" />
+<meta property="article:published_time" content="2021-05-08T16:55:13&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-08T16:55:13&#43;08:00" /><meta property="og:site_name" content="Hugo Techdoc Theme" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/images/og-image.png"/>
+
+<meta name="twitter:title" content="OCR识别服务节点部署"/>
+<meta name="twitter:description" content="OCR识别服务节点部署 Toad Ocr Engine Server 本章主要表述将Toad OCR Engine 图像识别添加为集群中的RPC服务的方法。 ToadOCR分布式集群使用ETCD进行搭建"/>
+<meta itemprop="name" content="OCR识别服务节点部署">
+<meta itemprop="description" content="OCR识别服务节点部署 Toad Ocr Engine Server 本章主要表述将Toad OCR Engine 图像识别添加为集群中的RPC服务的方法。 ToadOCR分布式集群使用ETCD进行搭建"><meta itemprop="datePublished" content="2021-05-08T16:55:13&#43;08:00" />
+<meta itemprop="dateModified" content="2021-05-08T16:55:13&#43;08:00" />
+<meta itemprop="wordCount" content="1222"><meta itemprop="image" content="https://example.com/images/og-image.png"/>
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
+<p class="description">Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站</p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/getting-start/">快速开始</a></li>
+<li><a href="/tutorials/">使用讲解</a></li>
+<li><a href="/about/">关于</a></li>
+<li><a href="/how-toad-ocr-work/">Toad Ocr 如何运作</a></li>
+<li class="active"><a href="/distributed-cluster/">分布式集群</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>OCR识别服务节点部署</h1>
+<h1 id="ocr识别服务节点部署-toad-ocr-engine-server">OCR识别服务节点部署 Toad Ocr Engine Server</h1>
+<p>本章主要表述将Toad OCR Engine 图像识别添加为集群中的RPC服务的方法。</p>
+<p>ToadOCR分布式集群使用ETCD进行搭建。所有操作的前提是完成本章目录下的环境搭建部分。</p>
+<h2 id="一toadocrengine服务架构">一、ToadOCREngine服务架构</h2>
+<p><img src="/images/toad_ocr_engine_logical_structure.png" alt="logical-structure"></p>
+<h2 id="二rpc-server-实现">二、RPC Server 实现</h2>
+<h3 id="1服务注册与服务发现">1、服务注册与服务发现</h3>
+<p>​	详见本章下<a href="etcd-register-resolver/">Etcd gRPC 服务注册与服务发现</a></p>
+<h3 id="2服务接口idl">2、服务接口IDL</h3>
+<p>​	IDL中定义了SayHello与Predict两个接口</p>
+<ul>
+<li>
+<p>SayHello</p>
+<p>是用于测试服务端是否运作正常的Ping Pong接口</p>
+<p>请求字段</p>
+<ul>
+<li>name string：ping 信息</li>
+</ul>
+<p>响应字段</p>
+<ul>
+<li>message string：pong信息</li>
+</ul>
+</li>
+<li>
+<p>Predict</p>
+<p>是用于预测单个图像的接口</p>
+<p>请求字段：</p>
+<ul>
+<li>net_flag string： 预测使用网络标志，默认值为“snn”代表脉冲神经网络，当其值被置为“cnn”时，将使用卷积神经网络进行预测。</li>
+<li>image []float64：图像数据，要求格式 28 * 28 黑底白字的灰度图，且图像像素以完成压缩（范围由0 ～ 255 压缩至 0.0～1.0）</li>
+</ul>
+</li>
+</ul>
+<pre><code>// Copyright 2015 gRPC authors.
+//
+// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = &quot;proto3&quot;;
+
+option go_package = &quot;/&quot;;
+option java_multiple_files = true;
+option java_package = &quot;work.suvvm.toad_ocr_engine&quot;;
+option java_outer_classname = &quot;ToadOcrProto&quot;;
+
+package idl;
+
+// The greeting service definition.
+service ToadOcr {
+  // Sends a greeting
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  rpc Predict (PredictRequest) returns (PredictReply) {}
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message HelloReply {
+  string message = 1;
+}
+
+message PredictRequest {
+  string net_flag = 1;
+  repeated double image = 2;
+}
+
+message PredictReply {
+  int32 code = 1;
+  string message = 2;
+  string label = 3;
+}
+
+</code></pre><h3 id="3grpc服务端代码生成">3、gRPC服务端代码生成</h3>
+<p>​	请确保开发机中拥有protobuf环境，且可以发现grpc的protobuf插件protoc-gen-go-grpc</p>
+<ul>
+<li>生成go 服务端代码</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ protoc -I rpc/idl rpc/idl/toad_ocr.proto --go_out<span style="color:#f92672">=</span>plugins<span style="color:#f92672">=</span>grpc:rpc/idl
+</code></pre></div><p>​	由于使用的grpc版本并非最新的release（详见环境搭建-Etcd client），所以要对生成的代码进行修正，将部分不正确的变量名进行替换</p>
+<ul>
+<li>变量名修正</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ sed -i <span style="color:#e6db74">&#39;&#39;</span> <span style="color:#e6db74">&#39;s/ClientConnInterface/ClientConn/g&#39;</span> rpc/idl/toad_ocr.pb.go
+$ sed -i <span style="color:#e6db74">&#39;&#39;</span> <span style="color:#e6db74">&#39;s/SupportPackageIsVersion6/SupportPackageIsVersion4/g&#39;</span> rpc/idl/toad_ocr.pb.go
+</code></pre></div><h3 id="4handler设计">4、handler设计</h3>
+<ul>
+<li>SayHello</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// SayHello implements helloworld.GreeterServer
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">s</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Server</span>) <span style="color:#a6e22e">SayHello</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">in</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">HelloRequest</span>) (<span style="color:#f92672">*</span><span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">HelloReply</span>, <span style="color:#66d9ef">error</span>) {
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Received: %v&#34;</span>, <span style="color:#a6e22e">in</span>.<span style="color:#a6e22e">GetName</span>())
+	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">HelloReply</span>{<span style="color:#a6e22e">Message</span>: <span style="color:#e6db74">&#34;Hello &#34;</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">in</span>.<span style="color:#a6e22e">GetName</span>()}, <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><ul>
+<li>
+<p>Predict</p>
+<p>Predict方法处理请求中的神经网络标识，根据标识分配给具体神经网络进行Predict，根据具体情况决定返回预测结果或错误信息。</p>
+</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">s</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Server</span>) <span style="color:#a6e22e">Predict</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">in</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">PredictRequest</span>) (<span style="color:#f92672">*</span><span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">PredictReply</span>, <span style="color:#66d9ef">error</span>) {
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Predict %v&#34;</span>, <span style="color:#a6e22e">in</span>.<span style="color:#a6e22e">NetFlag</span>)
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">lab</span> <span style="color:#66d9ef">string</span>
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">in</span>.<span style="color:#a6e22e">NetFlag</span> <span style="color:#f92672">==</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">SnnName</span> {
+		<span style="color:#a6e22e">lab</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">nn</span>.<span style="color:#a6e22e">SnnPredict</span>(<span style="color:#a6e22e">snn</span>, <span style="color:#a6e22e">in</span>.<span style="color:#a6e22e">Image</span>)
+	} <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">in</span>.<span style="color:#a6e22e">NetFlag</span> <span style="color:#f92672">==</span> <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">CnnName</span> {
+		<span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">Lock</span>.<span style="color:#a6e22e">Lock</span>()
+		<span style="color:#a6e22e">lab</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">nn</span>.<span style="color:#a6e22e">CnnPredict</span>(<span style="color:#a6e22e">cnn</span>, <span style="color:#a6e22e">in</span>.<span style="color:#a6e22e">Image</span>)
+		<span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">Lock</span>.<span style="color:#a6e22e">Unlock</span>()
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">PredictReply</span>{<span style="color:#a6e22e">Code</span>: int32(<span style="color:#f92672">*</span><span style="color:#a6e22e">errorCode</span>), <span style="color:#a6e22e">Message</span>: <span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>(), <span style="color:#a6e22e">Label</span>: <span style="color:#f92672">*</span><span style="color:#a6e22e">errorLab</span>}, <span style="color:#66d9ef">nil</span>
+	}
+	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">PredictReply</span>{<span style="color:#a6e22e">Code</span>: int32(<span style="color:#f92672">*</span><span style="color:#a6e22e">successCode</span>), <span style="color:#a6e22e">Message</span>: <span style="color:#f92672">*</span><span style="color:#a6e22e">successMsg</span>, <span style="color:#a6e22e">Label</span>: <span style="color:#a6e22e">lab</span>}, <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><h3 id="5服务端启动">5、服务端启动</h3>
+<ul>
+<li>
+<p>初始化</p>
+<p>为了提高效率，ToadOCREngine服务端会长持两个神经网络，而不是每次收到请求后再尝试恢复它们</p>
+</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">initNN</span>() {
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>
+	<span style="color:#a6e22e">snn</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">LoadSNNFromSave</span>()
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatalf</span>(<span style="color:#e6db74">&#34;Failed at load snn weights %v&#34;</span>, <span style="color:#a6e22e">err</span>)
+	}
+	<span style="color:#a6e22e">cnn</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">LoadCNNFromSave</span>()
+	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">VM</span>.<span style="color:#a6e22e">Close</span>()
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatalf</span>(<span style="color:#e6db74">&#34;Unable to load cnn file %v&#34;</span>, <span style="color:#a6e22e">err</span>)
+	}
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">out</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Value</span>
+	<span style="color:#a6e22e">rv</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Read</span>(<span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">Out</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">out</span>)
+	<span style="color:#a6e22e">fwdNet</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">G</span>.<span style="color:#a6e22e">SubgraphRoots</span>(<span style="color:#a6e22e">rv</span>)
+	<span style="color:#a6e22e">vm</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewTapeMachine</span>(<span style="color:#a6e22e">fwdNet</span>)
+	<span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">VM</span> = <span style="color:#a6e22e">vm</span>
+}
+</code></pre></div><ul>
+<li>启动逻辑
+<ul>
+<li>进行初始化</li>
+<li>设置监听端口</li>
+<li>注册服务至控制中心</li>
+<li>启动新协程监听退出信号</li>
+<li>创建新的RPC server</li>
+<li>注册接口handler</li>
+<li>启动RPC服务端</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">RunRPCServer</span>() {
+	<span style="color:#a6e22e">initNN</span>()
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;service listen port:%v&#34;</span>, <span style="color:#a6e22e">port</span>)
+	<span style="color:#a6e22e">lis</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Listen</span>(<span style="color:#e6db74">&#34;tcp&#34;</span>, <span style="color:#e6db74">&#34;:&#34;</span> <span style="color:#f92672">+</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">port</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatalf</span>(<span style="color:#e6db74">&#34;failed to listen: %v&#34;</span>, <span style="color:#a6e22e">err</span>)
+	}
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;register rpc server to control center...&#34;</span>)
+	<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">Register</span>(<span style="color:#f92672">*</span><span style="color:#a6e22e">reg</span>, <span style="color:#f92672">*</span><span style="color:#a6e22e">serv</span>, <span style="color:#f92672">*</span><span style="color:#a6e22e">host</span>, <span style="color:#f92672">*</span><span style="color:#a6e22e">port</span>, <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span><span style="color:#f92672">*</span><span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">15</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		panic(<span style="color:#a6e22e">err</span>)
+	}
+	<span style="color:#a6e22e">ch</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Signal</span>, <span style="color:#ae81ff">1</span>)
+	<span style="color:#a6e22e">signal</span>.<span style="color:#a6e22e">Notify</span>(<span style="color:#a6e22e">ch</span>, <span style="color:#a6e22e">syscall</span>.<span style="color:#a6e22e">SIGTERM</span>, <span style="color:#a6e22e">syscall</span>.<span style="color:#a6e22e">SIGINT</span>, <span style="color:#a6e22e">syscall</span>.<span style="color:#a6e22e">SIGHUP</span>, <span style="color:#a6e22e">syscall</span>.<span style="color:#a6e22e">SIGQUIT</span>)
+	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+		<span style="color:#a6e22e">s</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">ch</span>
+		<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;receive signal &#39;%v&#39;&#34;</span>, <span style="color:#a6e22e">s</span>)
+		<span style="color:#a6e22e">UnRegister</span>()
+		<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Exit</span>(<span style="color:#ae81ff">1</span>)
+	}()
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;create new toad ocr rpc server...&#34;</span>)
+	<span style="color:#a6e22e">s</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">grpc</span>.<span style="color:#a6e22e">NewServer</span>()
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;register handler...&#34;</span>)
+	<span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">RegisterToadOcrServer</span>(<span style="color:#a6e22e">s</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">Server</span>{})
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;run toad ocr rpc server...&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">s</span>.<span style="color:#a6e22e">Serve</span>(<span style="color:#a6e22e">lis</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatalf</span>(<span style="color:#e6db74">&#34;failed to serve: %v&#34;</span>, <span style="color:#a6e22e">err</span>)
+	}
+}
+</code></pre></div><div class="edit-meta">
+Last updated on 8 May 2021
+
+
+<br>
+Published on 8 May 2021
+<br><a href="https://github.com/suvvm/ToadOCRDocument/edit/master/content/distributed-cluster/toad-ocr-engine-server.md" class="edit-page"><i class="fas fa-pen-square"></i>&nbsp;Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/" title="图像预处理服务部署"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - 图像预处理服务部署</a>
+<a class="nav nav-next" href="https://example.com/distributed-cluster/proxy-china/" title="中国大陆服务器代理">Next - 中国大陆服务器代理 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://example.com">Home</a></li>
+
+<li class=""><a href="https://example.com/getting-start/">快速开始</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/getting-start/use-http-client/">使用Toad OCR http客户端</a></li>
+<li class=""><a href="https://example.com/getting-start/contribut-doc/">为开源文档做贡献</a></li>
+<li class=""><a href="https://example.com/getting-start/tags-map/">标签对照</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/tutorials/">使用讲解</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/tutorials/install-dependencies/">服务器环境搭建</a></li>
+<li class=""><a href="https://example.com/tutorials/use-client/">使用RPC客户端</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/about/">关于</a>
+  
+</li>
+
+<li class="parent"><a href="https://example.com/distributed-cluster/">分布式集群</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/distributed-cluster/etcd-register-resolver/">Etcd gRPC 服务注册与服务发现</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/cluster-construction/">集群搭建</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/">图像预处理服务部署</a></li>
+<li class="active"><a href="https://example.com/distributed-cluster/toad-ocr-engine-server/">OCR识别服务节点部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/proxy-china/">中国大陆服务器代理</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/environment-construction/">服务器环境搭建</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/how-toad-ocr-work/">Toad Ocr 如何运作</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/how-toad-ocr-work/persistence/">神经网络权重持久化与恢复</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/visualize/">图像可视化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/data-load/">数据集加载</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/zca/">对图像进行ZCA白化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/cnn/">卷积神经网络</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/snn/">脉冲神经网络</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_SVG"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[\[','\]\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+</div>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>神经网络权重持久化与恢复 - Toad OCR</title>
+<meta name="description" content="Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站">
+<meta name="generator" content="Hugo 0.83.0" />
+<link href="https://example.com/index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://example.com/how-toad-ocr-work/persistence/">
+<link rel="stylesheet" href="https://example.com/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://example.com/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script src="https://example.com/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="神经网络权重持久化与恢复" />
+<meta property="og:description" content="神经网络权重持久化与恢复 Persistence ​ 各层的权重矩阵是神经网络训练结果的直观体现，可以通过对权重的复制得到一个完全相同的神经网络。本章将介绍ToadO" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/how-toad-ocr-work/persistence/" /><meta property="og:image" content="https://example.com/images/og-image.png"/><meta property="article:section" content="how-toad-ocr-work" />
+<meta property="article:published_time" content="2021-05-07T21:16:30&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-07T21:16:30&#43;08:00" /><meta property="og:site_name" content="Hugo Techdoc Theme" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/images/og-image.png"/>
+
+<meta name="twitter:title" content="神经网络权重持久化与恢复"/>
+<meta name="twitter:description" content="神经网络权重持久化与恢复 Persistence ​ 各层的权重矩阵是神经网络训练结果的直观体现，可以通过对权重的复制得到一个完全相同的神经网络。本章将介绍ToadO"/>
+<meta itemprop="name" content="神经网络权重持久化与恢复">
+<meta itemprop="description" content="神经网络权重持久化与恢复 Persistence ​ 各层的权重矩阵是神经网络训练结果的直观体现，可以通过对权重的复制得到一个完全相同的神经网络。本章将介绍ToadO"><meta itemprop="datePublished" content="2021-05-07T21:16:30&#43;08:00" />
+<meta itemprop="dateModified" content="2021-05-07T21:16:30&#43;08:00" />
+<meta itemprop="wordCount" content="965"><meta itemprop="image" content="https://example.com/images/og-image.png"/>
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
+<p class="description">Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站</p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/getting-start/">快速开始</a></li>
+<li><a href="/tutorials/">使用讲解</a></li>
+<li><a href="/about/">关于</a></li>
+<li class="active"><a href="/how-toad-ocr-work/">Toad Ocr 如何运作</a></li>
+<li><a href="/distributed-cluster/">分布式集群</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>神经网络权重持久化与恢复</h1>
+<h1 id="神经网络权重持久化与恢复-persistence">神经网络权重持久化与恢复 Persistence</h1>
+<p>​	各层的权重矩阵是神经网络训练结果的直观体现，可以通过对权重的复制得到一个完全相同的神经网络。本章将介绍ToadOCR针对支持的两种神经网络进行持久化和恢复的方式。</p>
+<h2 id="一脉冲神经网络">一、脉冲神经网络</h2>
+<h3 id="1持久化">1、持久化</h3>
+<p>​	ToadOCR前馈型脉冲神经设计为单隐层，只需将隐层Hidden与训练次数TrainEpoch进行保存即可，张量完成了对 <code>GobEncode</code> 的支持，可以直接使用<code>GobEncode</code>对张量进行持久化。</p>
+<p>​	下方函数创建了文件&quot;snn_weights&quot;，并将隐层和训练次数持久化至其中</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">snn</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">SNN</span>) <span style="color:#a6e22e">Persistence</span>() <span style="color:#66d9ef">error</span> {
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">snnSave</span>([]<span style="color:#f92672">*</span><span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Dense</span>{<span style="color:#a6e22e">snn</span>.<span style="color:#a6e22e">Hidden</span>}, <span style="color:#a6e22e">snn</span>.<span style="color:#a6e22e">TrainEpoch</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+}
+
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">snnSave</span>(<span style="color:#a6e22e">nodes</span> []<span style="color:#f92672">*</span><span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Dense</span>, <span style="color:#a6e22e">trainEpoch</span> <span style="color:#66d9ef">int</span>) <span style="color:#66d9ef">error</span> {
+	<span style="color:#a6e22e">f</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Create</span>(<span style="color:#e6db74">&#34;snn_weights&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">Close</span>()
+	<span style="color:#a6e22e">enc</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gob</span>.<span style="color:#a6e22e">NewEncoder</span>(<span style="color:#a6e22e">f</span>)
+	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">node</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">nodes</span> {
+		<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">enc</span>.<span style="color:#a6e22e">Encode</span>(<span style="color:#a6e22e">node</span>)
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+		}
+	}
+	<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">enc</span>.<span style="color:#a6e22e">Encode</span>(<span style="color:#a6e22e">trainEpoch</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><h3 id="2恢复">2、恢复</h3>
+<p>​	同理，张量完成了对 <code>GobDecode</code> 的支持，可以直接使用<code>GobDecode</code>对持久化的张量进行恢复。</p>
+<p>​	下方函数读取snn_weights中持久化的权重矩阵与训练数据，并将其恢复为*model.SNN</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">LoadSNNFromSave</span>() (<span style="color:#f92672">*</span><span style="color:#a6e22e">SNN</span>, <span style="color:#66d9ef">error</span>) {
+	<span style="color:#a6e22e">f</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Open</span>(<span style="color:#e6db74">&#34;snn_weights&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">Close</span>()
+	<span style="color:#a6e22e">dec</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gob</span>.<span style="color:#a6e22e">NewDecoder</span>(<span style="color:#a6e22e">f</span>)
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">hidden</span>, <span style="color:#a6e22e">final</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Dense</span>
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">trainEpoch</span> <span style="color:#66d9ef">int</span>
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;decoding hidden&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">dec</span>.<span style="color:#a6e22e">Decode</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">hidden</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;decoding trainEpoch&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">dec</span>.<span style="color:#a6e22e">Decode</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">trainEpoch</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">SNN</span>{
+		<span style="color:#a6e22e">Hidden</span>: <span style="color:#a6e22e">hidden</span>,
+		<span style="color:#a6e22e">Final</span>: <span style="color:#a6e22e">final</span>,
+		<span style="color:#a6e22e">TrainEpoch</span>: <span style="color:#a6e22e">trainEpoch</span>,
+	}, <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><h2 id="二卷积神经网络">二、卷积神经网络</h2>
+<h3 id="1持久化-1">1、持久化</h3>
+<p>​	与脉冲神经网络相同，卷积神经网络的持久化也是真的权重矩阵与训练次数，这里将三个卷积层权重全链接层权重与输出权重全部进行持久化</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">cnn</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">CNN</span>) <span style="color:#a6e22e">Persistence</span>() <span style="color:#66d9ef">error</span> {
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">cnnSave</span>([]<span style="color:#f92672">*</span><span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Node</span>{<span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">W0</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">W1</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">W2</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">W3</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">W4</span>}, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">TrainEpoch</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><h3 id="2恢复-1">2、恢复</h3>
+<p>​	与脉冲神经网络不通的是卷积神经网络在恢复时还需要恢复语法数学表达式图(可重用节点的AST)，并进行一次前向传播拿到OutVal的地址。并构造vm</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">LoadCNNFromSave</span>() (<span style="color:#f92672">*</span><span style="color:#a6e22e">CNN</span>, <span style="color:#66d9ef">error</span>) {
+	<span style="color:#a6e22e">f</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Open</span>(<span style="color:#e6db74">&#34;cnn_weights&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">Close</span>()
+	<span style="color:#a6e22e">dec</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gob</span>.<span style="color:#a6e22e">NewDecoder</span>(<span style="color:#a6e22e">f</span>)
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">w0_val</span>, <span style="color:#a6e22e">w1_val</span>, <span style="color:#a6e22e">w2_val</span>, <span style="color:#a6e22e">w3_val</span>, <span style="color:#a6e22e">w4_val</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Dense</span>
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">trainEpoch</span> <span style="color:#66d9ef">int</span>
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;decoding w0&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">dec</span>.<span style="color:#a6e22e">Decode</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">w0_val</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;decoding w1&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">dec</span>.<span style="color:#a6e22e">Decode</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">w1_val</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;decoding w2&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">dec</span>.<span style="color:#a6e22e">Decode</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">w2_val</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;decoding w3&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">dec</span>.<span style="color:#a6e22e">Decode</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">w3_val</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;decoding w4&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">dec</span>.<span style="color:#a6e22e">Decode</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">w4_val</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;decoding trainEpoch&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">dec</span>.<span style="color:#a6e22e">Decode</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">trainEpoch</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#a6e22e">g</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewGraph</span>()
+	<span style="color:#a6e22e">x</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewTensor</span>(<span style="color:#a6e22e">g</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Float64</span>, <span style="color:#ae81ff">4</span>, <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithShape</span>(<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">CNNBatchSize</span>,
+		<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImageChannel</span>, <span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImageRows</span>,
+		<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">RawImageCols</span>), <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithName</span>(<span style="color:#e6db74">&#34;x&#34;</span>))
+	<span style="color:#75715e">// 表达式网络输入数据y，内容为上述图像数据对应标签张量
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">y</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewMatrix</span>(<span style="color:#a6e22e">g</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Float64</span>, <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithShape</span>(<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">CNNBatchSize</span>,
+		<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">EMNISTByClassNumLabels</span>), <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithName</span>(<span style="color:#e6db74">&#34;y&#34;</span>))
+	<span style="color:#a6e22e">w0</span><span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewTensor</span>(<span style="color:#a6e22e">g</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Float64</span>,<span style="color:#ae81ff">4</span>, <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithValue</span>(<span style="color:#a6e22e">w0_val</span>), <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithName</span>(<span style="color:#e6db74">&#34;w0&#34;</span>))
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34; w0:%v \n&#34;</span>, <span style="color:#a6e22e">w0</span>)
+	<span style="color:#a6e22e">w1</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewTensor</span>(<span style="color:#a6e22e">g</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Float64</span>,<span style="color:#ae81ff">4</span>, <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithValue</span>(<span style="color:#a6e22e">w1_val</span>), <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithName</span>(<span style="color:#e6db74">&#34;w1&#34;</span>))
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;w1:%v \n&#34;</span>, <span style="color:#a6e22e">w1</span>)
+	<span style="color:#a6e22e">w2</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewTensor</span>(<span style="color:#a6e22e">g</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Float64</span>, <span style="color:#ae81ff">4</span>, <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithValue</span>(<span style="color:#a6e22e">w2_val</span>), <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithName</span>(<span style="color:#e6db74">&#34;w2&#34;</span>))
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;w2:%v \n&#34;</span>, <span style="color:#a6e22e">w2</span>)
+	<span style="color:#a6e22e">w3</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewMatrix</span>(<span style="color:#a6e22e">g</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Float64</span>, <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithValue</span>(<span style="color:#a6e22e">w3_val</span>), <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithName</span>(<span style="color:#e6db74">&#34;w3&#34;</span>))
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;w3:%v \n&#34;</span>, <span style="color:#a6e22e">w3</span>)
+	<span style="color:#a6e22e">w4</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">NewMatrix</span>(<span style="color:#a6e22e">g</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Float64</span>, <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithValue</span>(<span style="color:#a6e22e">w4_val</span>), <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">WithName</span>(<span style="color:#e6db74">&#34;w4&#34;</span>))
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;w4:%v \n&#34;</span>, <span style="color:#a6e22e">w4</span>)
+	<span style="color:#a6e22e">cnn</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">CNN</span>{
+		<span style="color:#a6e22e">G</span>: <span style="color:#a6e22e">g</span>,
+		<span style="color:#a6e22e">W0</span>: <span style="color:#a6e22e">w0</span>,
+		<span style="color:#a6e22e">W1</span>: <span style="color:#a6e22e">w1</span>,
+		<span style="color:#a6e22e">W2</span>: <span style="color:#a6e22e">w2</span>,
+		<span style="color:#a6e22e">W3</span>: <span style="color:#a6e22e">w3</span>,
+		<span style="color:#a6e22e">W4</span>: <span style="color:#a6e22e">w4</span>,
+		<span style="color:#a6e22e">D0</span>: <span style="color:#ae81ff">0.2</span>,
+		<span style="color:#a6e22e">D1</span>: <span style="color:#ae81ff">0.2</span>,
+		<span style="color:#a6e22e">D2</span>: <span style="color:#ae81ff">0.2</span>,
+		<span style="color:#a6e22e">D3</span>: <span style="color:#ae81ff">0.55</span>,
+		<span style="color:#a6e22e">TrainEpoch</span>: <span style="color:#a6e22e">trainEpoch</span>,
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">Fwd</span>(<span style="color:#a6e22e">x</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#a6e22e">losses</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Must</span>(<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">HadamardProd</span>(<span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">Out</span>, <span style="color:#a6e22e">y</span>))
+	<span style="color:#a6e22e">cost</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Must</span>(<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Mean</span>(<span style="color:#a6e22e">losses</span>))
+	<span style="color:#a6e22e">cost</span> = <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Must</span>(<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Neg</span>(<span style="color:#a6e22e">cost</span>))
+	<span style="color:#75715e">// 跟踪成本
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">costVal</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Value</span>
+	<span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Read</span>(<span style="color:#a6e22e">cost</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">costVal</span>)
+	<span style="color:#75715e">// 根据权重矩阵获取成本
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gorgonia</span>.<span style="color:#a6e22e">Grad</span>(<span style="color:#a6e22e">cost</span>, <span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">Learnables</span>()<span style="color:#f92672">...</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#a6e22e">cnn</span>.<span style="color:#a6e22e">VMBuild</span>()
+	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">cnn</span>, <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><div class="edit-meta">
+Last updated on 7 May 2021
+
+
+<br>
+Published on 7 May 2021
+<br><a href="https://github.com/suvvm/ToadOCRDocument/edit/master/content/how-toad-ocr-work/persistence.md" class="edit-page"><i class="fas fa-pen-square"></i>&nbsp;Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://example.com/how-toad-ocr-work/" title="Toad Ocr 如何运作"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - Toad Ocr 如何运作</a>
+<a class="nav nav-next" href="https://example.com/how-toad-ocr-work/visualize/" title="图像可视化">Next - 图像可视化 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://example.com">Home</a></li>
+
+<li class=""><a href="https://example.com/getting-start/">快速开始</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/getting-start/use-http-client/">使用Toad OCR http客户端</a></li>
+<li class=""><a href="https://example.com/getting-start/contribut-doc/">为开源文档做贡献</a></li>
+<li class=""><a href="https://example.com/getting-start/tags-map/">标签对照</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/tutorials/">使用讲解</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/tutorials/install-dependencies/">服务器环境搭建</a></li>
+<li class=""><a href="https://example.com/tutorials/use-client/">使用RPC客户端</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/about/">关于</a>
+  
+</li>
+
+<li class=""><a href="https://example.com/distributed-cluster/">分布式集群</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/distributed-cluster/etcd-register-resolver/">Etcd gRPC 服务注册与服务发现</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/cluster-construction/">集群搭建</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/">图像预处理服务部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-engine-server/">OCR识别服务节点部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/proxy-china/">中国大陆服务器代理</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/environment-construction/">服务器环境搭建</a></li>
+</ul>
+  
+</li>
+
+<li class="parent"><a href="https://example.com/how-toad-ocr-work/">Toad Ocr 如何运作</a>
+  
+<ul class="sub-menu">
+<li class="active"><a href="https://example.com/how-toad-ocr-work/persistence/">神经网络权重持久化与恢复</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/visualize/">图像可视化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/data-load/">数据集加载</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/zca/">对图像进行ZCA白化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/cnn/">卷积神经网络</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/snn/">脉冲神经网络</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_SVG"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[\[','\]\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+</div>
+</body>
+</html>

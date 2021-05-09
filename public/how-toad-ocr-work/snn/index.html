@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>脉冲神经网络 - Toad OCR</title>
+<meta name="description" content="Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站">
+<meta name="generator" content="Hugo 0.83.0" />
+<link href="https://example.com/index.xml" rel="alternate" type="application/rss+xml">
+<link rel="canonical" href="https://example.com/how-toad-ocr-work/snn/">
+<link rel="stylesheet" href="https://example.com/css/theme.min.css">
+<script src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+<link rel="stylesheet" href="https://example.com/css/chroma.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.easing@1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script src="https://example.com/js/bundle.js"></script><style>
+:root {}
+</style>
+<meta property="og:title" content="脉冲神经网络" />
+<meta property="og:description" content="脉冲神经网络 Spiking Neural Network ​ ToadOCREngine 使用两种神经网络完成手写体字符集识别，本章对脉冲神经网络的实现进行介绍 一. 多层前馈型脉冲神经网络 ​ ToadOCREngine 使用脉冲神经网络使" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://example.com/how-toad-ocr-work/snn/" /><meta property="og:image" content="https://example.com/images/og-image.png"/><meta property="article:section" content="how-toad-ocr-work" />
+<meta property="article:published_time" content="2021-05-07T16:54:39&#43;08:00" />
+<meta property="article:modified_time" content="2021-05-07T16:54:39&#43;08:00" /><meta property="og:site_name" content="Hugo Techdoc Theme" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://example.com/images/og-image.png"/>
+
+<meta name="twitter:title" content="脉冲神经网络"/>
+<meta name="twitter:description" content="脉冲神经网络 Spiking Neural Network ​ ToadOCREngine 使用两种神经网络完成手写体字符集识别，本章对脉冲神经网络的实现进行介绍 一. 多层前馈型脉冲神经网络 ​ ToadOCREngine 使用脉冲神经网络使"/>
+<meta itemprop="name" content="脉冲神经网络">
+<meta itemprop="description" content="脉冲神经网络 Spiking Neural Network ​ ToadOCREngine 使用两种神经网络完成手写体字符集识别，本章对脉冲神经网络的实现进行介绍 一. 多层前馈型脉冲神经网络 ​ ToadOCREngine 使用脉冲神经网络使"><meta itemprop="datePublished" content="2021-05-07T16:54:39&#43;08:00" />
+<meta itemprop="dateModified" content="2021-05-07T16:54:39&#43;08:00" />
+<meta itemprop="wordCount" content="2380"><meta itemprop="image" content="https://example.com/images/og-image.png"/>
+<meta itemprop="keywords" content="" /></head>
+<body><div class="container"><header>
+<h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
+<p class="description">Go语言开发的卷积神经网络OCR - 开放RPC接口供开发者使用 - 这是提供介绍和教程的网站</p>
+
+</header>
+<div class="global-menu">
+<nav>
+<ul>
+<li><a href="/getting-start/">快速开始</a></li>
+<li><a href="/tutorials/">使用讲解</a></li>
+<li><a href="/about/">关于</a></li>
+<li class="active"><a href="/how-toad-ocr-work/">Toad Ocr 如何运作</a></li>
+<li><a href="/distributed-cluster/">分布式集群</a></li></ul>
+</nav>
+</div>
+<div class="content-container">
+<main><h1>脉冲神经网络</h1>
+<h1 id="脉冲神经网络-spiking-neural-network">脉冲神经网络 Spiking Neural Network</h1>
+<p>​	ToadOCREngine 使用两种神经网络完成手写体字符集识别，本章对脉冲神经网络的实现进行介绍</p>
+<h2 id="一-多层前馈型脉冲神经网络">一. 多层前馈型脉冲神经网络</h2>
+<p>​	ToadOCREngine 使用脉冲神经网络使用多层前馈型脉冲神经网络</p>
+<p>​	在ToadOCREngine多层前馈脉冲神经网络结构中，网络中的神经元是分层排列的，输入层各神经元的脉冲序列表示对具体图像输入数据的编码，并将其输入脉冲神经网络的下一层。最后一层为输出层，该层各神经元输出的脉冲序列构成网络的输出，即62种可识别数子和字符的热独向量，详见<a href="http://localhost:1313/getting-start/tags-map/">tags mapping</a>。输入层和输出层之间有一个隐藏层。</p>
+<p>​	ToadOCREngine多层前馈脉冲神经网络，与传统的前馈人工神经网络中两个神经元之间仅有一个突触连接不同，脉冲神经网络可采用多突触连接的网络结构，两个神经元之间可以有多个突触连接，每个突触具有不同的延时和可修改的连接权值。多突触的不同延时使得突触前神经元输入的脉冲能够在更长的时间范围对突触后神经元的脉冲发放产生影响。突触前神经元传递的多个脉冲再根据突触权值的大小产生不同的突触后电位。</p>
+<h3 id="1神经网络设计">1、神经网络设计</h3>
+<ul>
+<li>
+<p>多层前馈型脉冲神经网络结构示意图</p>
+<p><img src="/images/snn-layout.png" alt="snn-layout"></p>
+</li>
+<li>
+<p>多层前馈型脉冲神经网络结构设计代码</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// SNN 脉冲神经网络结构
+</span><span style="color:#75715e">// 输入层是common.MNISTRawImageRows * common.MNISTRawImageCols个float64型切片
+</span><span style="color:#75715e">// 前向馈入(矩阵惩罚后执行激活函数)形成隐层
+</span><span style="color:#75715e">// 隐层继续馈入形成输出层（MNIST为62个float64组成的向量，就是标签的热独编码）
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 参数
+</span><span style="color:#75715e">//	Hidden *tensor.Dense	// 输入层与隐层之间的权重矩阵
+</span><span style="color:#75715e">//	Final *tensor.Dense	// 隐层与输出层之间的权重矩阵
+</span><span style="color:#75715e">//	B0 float64				// 隐层偏置
+</span><span style="color:#75715e">//	B1 float64				// 输出层偏置
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">SNN</span> <span style="color:#66d9ef">struct</span> {
+	<span style="color:#a6e22e">Hidden</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Dense</span>
+	<span style="color:#a6e22e">Final</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Dense</span>
+	<span style="color:#a6e22e">B0</span> <span style="color:#66d9ef">float64</span>
+	<span style="color:#a6e22e">B1</span> <span style="color:#66d9ef">float64</span>
+	<span style="color:#a6e22e">TrainEpoch</span> <span style="color:#66d9ef">int</span>
+}
+</code></pre></div></li>
+</ul>
+<h3 id="2神经网络创建">2、神经网络创建</h3>
+<p>​	神经网络创建主要实现对权重矩阵的初始化，这里单独设计了一个函数<code>FillRandom</code>该函数在utils包下，得以在给定范围内均匀分布的填充平均值到权重矩阵中</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// NewSNN 构建新的脉冲神经网络
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 入参
+</span><span style="color:#75715e">//	input int	// 输入数据长度
+</span><span style="color:#75715e">//	hidden int	// 隐层神经元数量
+</span><span style="color:#75715e">//	output int	// 输出层神经元数量
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 返回
+</span><span style="color:#75715e">//	*model.SNN	// 基础神经网络
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewSNN</span>(<span style="color:#a6e22e">input</span>, <span style="color:#a6e22e">hidden</span>, <span style="color:#a6e22e">output</span> <span style="color:#66d9ef">int</span>) <span style="color:#f92672">*</span><span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">SNN</span> {
+	<span style="color:#a6e22e">hiddenData</span> <span style="color:#f92672">:=</span> make([]<span style="color:#66d9ef">float64</span>, <span style="color:#a6e22e">hidden</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">input</span>)	<span style="color:#75715e">// 隐层权重矩阵数据切片
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">finalData</span> <span style="color:#f92672">:=</span> make([]<span style="color:#66d9ef">float64</span>, <span style="color:#a6e22e">hidden</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">output</span>)	<span style="color:#75715e">// 输出层权重矩阵数据切片
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// 随机填充
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">utils</span>.<span style="color:#a6e22e">FillRandom</span>(<span style="color:#a6e22e">hiddenData</span>, float64(len(<span style="color:#a6e22e">hiddenData</span>)))
+	<span style="color:#a6e22e">utils</span>.<span style="color:#a6e22e">FillRandom</span>(<span style="color:#a6e22e">finalData</span>, float64(len(<span style="color:#a6e22e">finalData</span>)))
+	<span style="color:#75715e">// 创建张量
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">hiddenT</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">New</span>(<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">WithShape</span>(<span style="color:#a6e22e">hidden</span>, <span style="color:#a6e22e">input</span>), <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">WithBacking</span>(<span style="color:#a6e22e">hiddenData</span>))
+	<span style="color:#a6e22e">finalT</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">New</span>(<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">WithShape</span>(<span style="color:#a6e22e">output</span>, <span style="color:#a6e22e">hidden</span>), <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">WithBacking</span>(<span style="color:#a6e22e">finalData</span>))
+	<span style="color:#75715e">// 返回新的基础神经网络
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">SNN</span>{
+		<span style="color:#a6e22e">Hidden</span>: <span style="color:#a6e22e">hiddenT</span>,
+		<span style="color:#a6e22e">Final</span>: <span style="color:#a6e22e">finalT</span>,
+	}
+}
+</code></pre></div><h3 id="3前馈">3、前馈</h3>
+<p>​	前馈，就是数据在神经网络中传播的过程，如果这个过程中没有改变权重矩阵，则是一次预测过程。同理，如果前馈的过程中改变了权重矩阵的内容，则就是一次训练。</p>
+<p>​	在ToadOCREngine snn中，成本采用的是误差的平方和，误差指的是目标数据label与预测值热独向量之差，为了避免成本出现负值，对误差取平方。成本的计算与反向传播密切相关。</p>
+<p>​	已知成本是误差的平方和（y为label热独向量，pred为预测结果热独向量）
+$$
+cost=(y - pred)^2
+$$
+​	成本对预测求导，可得
+$$
+\frac {\delta cost}{\delta pred} = 2(y - pred)
+$$
+​	对sigmoid函数求导，可得
+$$
+\frac {d\sigma(x)}{dx} = \sigma(x)(1-\sigma(x))
+$$
+由此可以推导出成本函数关于权重矩阵的导数。</p>
+<ul>
+<li>激活函数</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// Sigmoid （Logistic）神经网络激活函数
+</span><span style="color:#75715e">// 用于隐层神经元输出，将给定float64实数映射到(0,1)
+</span><span style="color:#75715e">// 定义公式 $ S(x) = \frac{1}{1 + e^{-x}} $
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 入参
+</span><span style="color:#75715e">//	x float64	// 给定float64实数
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 返回
+</span><span style="color:#75715e">//	float64		// 映射结果
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Sigmoid</span>(<span style="color:#a6e22e">x</span> <span style="color:#66d9ef">float64</span>) <span style="color:#66d9ef">float64</span> {
+	<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">/</span> (<span style="color:#ae81ff">1</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">math</span>.<span style="color:#a6e22e">Exp</span>(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">x</span>))
+}
+</code></pre></div><ul>
+<li>预测函数</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// Predict 前向传播函数
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 入参
+</span><span style="color:#75715e">//	data tensor.Tensor	// 输入参数张量
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 返回
+</span><span style="color:#75715e">//	int					// 输出层最大值索引
+</span><span style="color:#75715e">//	error				// 错误信息
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">snn</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">SNN</span>) <span style="color:#a6e22e">Predict</span>(<span style="color:#a6e22e">data</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>) (<span style="color:#66d9ef">int</span>, <span style="color:#66d9ef">error</span>) {
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">Dims</span>() <span style="color:#f92672">!=</span> <span style="color:#ae81ff">1</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">New</span>(<span style="color:#e6db74">&#34;Expected a vector&#34;</span>)
+	}
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">m</span> <span style="color:#a6e22e">Maybe</span>
+	<span style="color:#a6e22e">hidden</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">snn</span>.<span style="color:#a6e22e">Hidden</span>.<span style="color:#a6e22e">MatVecMul</span>(<span style="color:#a6e22e">data</span>)	<span style="color:#75715e">// 矩阵向量乘法 Hidden × data
+</span><span style="color:#75715e"></span>	})
+	<span style="color:#a6e22e">hiddenSigmoid</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Sigmoid</span>(<span style="color:#a6e22e">hidden</span>)	<span style="color:#75715e">// 执行激活函数形成隐层权重矩阵
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">final</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {	<span style="color:#75715e">// 矩阵向量乘法 Final × hiddenSigmoid
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">snn</span>.<span style="color:#a6e22e">Final</span>.<span style="color:#a6e22e">MatVecMul</span>(<span style="color:#a6e22e">hiddenSigmoid</span>)
+	})
+	<span style="color:#a6e22e">pred</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Sigmoid</span>(<span style="color:#a6e22e">final</span>)	<span style="color:#75715e">// 执行激活函数得到输出层权重矩阵
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">vecf64</span>.<span style="color:#a6e22e">Argmax</span>(<span style="color:#a6e22e">pred</span>.<span style="color:#a6e22e">Data</span>().([]<span style="color:#66d9ef">float64</span>)), <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><ul>
+<li>训练函数</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// Train 基础神经网络单次训练函数
+</span><span style="color:#75715e">// 进行单次训练并得到本次训练的成本（误差平方和对预测结果求偏导数）
+</span><span style="color:#75715e">//
+</span><span style="color:#75715e">// 入参
+</span><span style="color:#75715e">//	x tensor.Tensor		// 图像张量
+</span><span style="color:#75715e">//	y tensor.Tensor		// 标签张量
+</span><span style="color:#75715e">//	learnRate float64	// 梯度更新值（学习速率）
+</span><span style="color:#75715e">// 返回
+</span><span style="color:#75715e">//	float64				// 本次成本
+</span><span style="color:#75715e">//	error				// 错误信息
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">snn</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">SNN</span>) <span style="color:#a6e22e">Train</span>(<span style="color:#a6e22e">x</span>, <span style="color:#a6e22e">y</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#a6e22e">learnRate</span> <span style="color:#66d9ef">float64</span>) (<span style="color:#66d9ef">float64</span>, <span style="color:#66d9ef">error</span>) {
+	<span style="color:#75715e">// 预测
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">m</span> <span style="color:#a6e22e">Maybe</span>
+	<span style="color:#75715e">// 调整图像张量为一维张量
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">x</span>.<span style="color:#a6e22e">Reshape</span>(<span style="color:#a6e22e">x</span>.<span style="color:#a6e22e">Shape</span>()[<span style="color:#ae81ff">0</span>], <span style="color:#ae81ff">1</span>)
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">x</span>, <span style="color:#a6e22e">err</span>
+	})
+	<span style="color:#75715e">// 调整标签张量为一维张量
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">y</span>.<span style="color:#a6e22e">Reshape</span>(<span style="color:#a6e22e">common</span>.<span style="color:#a6e22e">EMNISTByClassNumLabels</span>, <span style="color:#ae81ff">1</span>)
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">y</span>, <span style="color:#a6e22e">err</span>
+	})
+	<span style="color:#75715e">// 隐层权重矩阵乘输入数据
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">hidden</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">MatMul</span>(<span style="color:#a6e22e">snn</span>.<span style="color:#a6e22e">Hidden</span>, <span style="color:#a6e22e">x</span>)
+	})
+	<span style="color:#75715e">// 执行激活函数
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">hiddenSigmoid</span> <span style="color:#f92672">:=</span>  <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Sigmoid</span>(<span style="color:#a6e22e">hidden</span>)
+
+	<span style="color:#75715e">//hiddenSigmoid := m.Do(func() (tensor.Tensor, error) {
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">//	return hidden.Apply(utils.Sigmoid, tensor.UseUnsafe())
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">//})
+</span><span style="color:#75715e"></span>
+	<span style="color:#75715e">// 隐层输出层权重矩阵乘隐层数据矩阵
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">final</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">MatMul</span>(<span style="color:#a6e22e">snn</span>.<span style="color:#a6e22e">Final</span>, <span style="color:#a6e22e">hiddenSigmoid</span>)
+	})
+	<span style="color:#a6e22e">pred</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Sigmoid</span>(<span style="color:#a6e22e">final</span>)
+	<span style="color:#75715e">//pred := m.Do(func() (tensor.Tensor, error) {
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">//	return final.Apply(utils.Sigmoid, tensor.UseUnsafe())
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">//})
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// 反向传播
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">cost</span> <span style="color:#66d9ef">float64</span>
+	<span style="color:#75715e">// 计算输出层误差， 标签减去结果得到误差
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">outputErrors</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Sub</span>(<span style="color:#a6e22e">y</span>, <span style="color:#a6e22e">pred</span>)
+	})
+	<span style="color:#a6e22e">cost</span> = <span style="color:#a6e22e">utils</span>.<span style="color:#a6e22e">Sum</span>(<span style="color:#a6e22e">outputErrors</span>.<span style="color:#a6e22e">Data</span>().([]<span style="color:#66d9ef">float64</span>))
+	<span style="color:#75715e">// 计算隐层误差
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">hidErrs</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#75715e">// Final 转置
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">snn</span>.<span style="color:#a6e22e">Final</span>.<span style="color:#a6e22e">T</span>(); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+		}
+		<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">snn</span>.<span style="color:#a6e22e">Final</span>.<span style="color:#a6e22e">UT</span>()	<span style="color:#75715e">// 函数结束后取消转置
+</span><span style="color:#75715e"></span>		<span style="color:#75715e">// Final 转置乘输出层误差
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">MatMul</span>(<span style="color:#a6e22e">snn</span>.<span style="color:#a6e22e">Final</span>, <span style="color:#a6e22e">outputErrors</span>)
+	})
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">err</span>
+	}
+	<span style="color:#75715e">// 结果矩阵的导数
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">dpred</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">pred</span>.<span style="color:#a6e22e">Apply</span>(<span style="color:#a6e22e">utils</span>.<span style="color:#a6e22e">DSigmoid</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">UseUnsafe</span>())
+	})
+	<span style="color:#75715e">// 元素乘法计算误差对结果矩阵的导数
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Mul</span>(<span style="color:#a6e22e">dpred</span>, <span style="color:#a6e22e">outputErrors</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">UseUnsafe</span>())
+	})
+	<span style="color:#75715e">// 误差对隐层输出层权重矩阵的导数
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">dpred_dfinal</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">hiddenSigmoid</span>.<span style="color:#a6e22e">T</span>(); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+		}
+		<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">hiddenSigmoid</span>.<span style="color:#a6e22e">UT</span>()
+		<span style="color:#75715e">// 误差乘输入层数据的转置
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">MatMul</span>(<span style="color:#a6e22e">outputErrors</span>, <span style="color:#a6e22e">hiddenSigmoid</span>)
+	})
+	<span style="color:#75715e">// 输入矩阵的导数
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">dHiddenSigmoid</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">hiddenSigmoid</span>.<span style="color:#a6e22e">Apply</span>(<span style="color:#a6e22e">utils</span>.<span style="color:#a6e22e">DSigmoid</span>)
+	})
+	<span style="color:#75715e">// 误差乘输入矩阵的导数
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Mul</span>(<span style="color:#a6e22e">hidErrs</span>, <span style="color:#a6e22e">dHiddenSigmoid</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">UseUnsafe</span>())
+	})
+	<span style="color:#75715e">// 调整误差乘输入矩阵的导数张量为一维张量
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">hidErrs</span>.<span style="color:#a6e22e">Reshape</span>(<span style="color:#a6e22e">hidErrs</span>.<span style="color:#a6e22e">Shape</span>()[<span style="color:#ae81ff">0</span>], <span style="color:#ae81ff">1</span>)
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">hidErrs</span>, <span style="color:#a6e22e">err</span>
+	})
+	<span style="color:#75715e">// 误差对输入层隐层权重矩阵的导数
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">dcost_dhidden</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">x</span>.<span style="color:#a6e22e">T</span>(); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+		}
+		<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">x</span>.<span style="color:#a6e22e">UT</span>()
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">MatMul</span>(<span style="color:#a6e22e">hidErrs</span>, <span style="color:#a6e22e">x</span>)
+	})
+	<span style="color:#75715e">// 使用上述求得的导数作为梯度，更新输入矩阵
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Mul</span>(<span style="color:#a6e22e">dpred_dfinal</span>, <span style="color:#a6e22e">learnRate</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">UseUnsafe</span>())
+	})
+	<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Mul</span>(<span style="color:#a6e22e">dcost_dhidden</span>, <span style="color:#a6e22e">learnRate</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">UseUnsafe</span>())
+	})
+	<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">snn</span>.<span style="color:#a6e22e">Final</span>, <span style="color:#a6e22e">dpred_dfinal</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">UseUnsafe</span>())
+	})
+	<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Do</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Tensor</span>, <span style="color:#66d9ef">error</span>) {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">snn</span>.<span style="color:#a6e22e">Hidden</span>, <span style="color:#a6e22e">dcost_dhidden</span>, <span style="color:#a6e22e">tensor</span>.<span style="color:#a6e22e">UseUnsafe</span>())
+	})
+	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">cost</span>, <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">err</span>
+}
+</code></pre></div><p>可以看到其实训练就是多次predict后对权重矩阵进行梯度更新。</p>
+<h3 id="4训练步骤">4、训练步骤</h3>
+<p>使用命令</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ ./toad_ocr_engine train snn
+</code></pre></div><p>对脉冲神经网络进行训练</p>
+<ol>
+<li>加载EMNIST数据集byclass图像与标签的训练集和测试集
+<ol>
+<li>加载图像</li>
+<li>图像进行像素压缩算法</li>
+<li>转换图像为张量</li>
+<li>加载标签</li>
+<li>转换标签为张量</li>
+</ol>
+</li>
+<li>对训练集图像进行ZCA白化处理</li>
+<li>根据持久化的权重文件是否存在决定恢复网络或创建新的网络</li>
+<li>生成成本切片，使用本地迭代器对网络进行训练，训练过程中跟踪成本</li>
+<li>完成训练后对权重矩阵进行持久化</li>
+<li>使用测试集进行交叉验证</li>
+</ol>
+<h3 id="5准确率">5、准确率</h3>
+<p>当前ToadOCREngine脉冲神经网络训练使用EMNIST数据集byclass，训练Epoch100+ 准确率82%</p>
+<div class="edit-meta">
+Last updated on 7 May 2021
+
+
+<br>
+Published on 7 May 2021
+<br><a href="https://github.com/suvvm/ToadOCRDocument/edit/master/content/how-toad-ocr-work/snn.md" class="edit-page"><i class="fas fa-pen-square"></i>&nbsp;Edit on GitHub</a></div><nav class="pagination"><a class="nav nav-prev" href="https://example.com/how-toad-ocr-work/cnn/" title="卷积神经网络"><i class="fas fa-arrow-left" aria-hidden="true"></i>&nbsp;Prev - 卷积神经网络</a>
+<a class="nav nav-next" href="https://example.com/how-toad-ocr-work/persistence/" title="神经网络权重持久化与恢复">Next - 神经网络权重持久化与恢复 <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+</nav><footer><p class="powered">Powered by <a href="https://gohugo.io">Hugo</a>. Theme by <a href="https://themes.gohugo.io/hugo-theme-techdoc/">TechDoc</a>. Designed by <a href="https://github.com/thingsym/hugo-theme-techdoc">Thingsym</a>.</p>
+</footer>
+</main>
+<div class="sidebar">
+
+<nav class="open-menu">
+<ul>
+<li class=""><a href="https://example.com">Home</a></li>
+
+<li class=""><a href="https://example.com/getting-start/">快速开始</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/getting-start/use-http-client/">使用Toad OCR http客户端</a></li>
+<li class=""><a href="https://example.com/getting-start/contribut-doc/">为开源文档做贡献</a></li>
+<li class=""><a href="https://example.com/getting-start/tags-map/">标签对照</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/tutorials/">使用讲解</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/tutorials/install-dependencies/">服务器环境搭建</a></li>
+<li class=""><a href="https://example.com/tutorials/use-client/">使用RPC客户端</a></li>
+</ul>
+  
+</li>
+
+<li class=""><a href="https://example.com/about/">关于</a>
+  
+</li>
+
+<li class=""><a href="https://example.com/distributed-cluster/">分布式集群</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/distributed-cluster/etcd-register-resolver/">Etcd gRPC 服务注册与服务发现</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/cluster-construction/">集群搭建</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-preprocessor-server/">图像预处理服务部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/toad-ocr-engine-server/">OCR识别服务节点部署</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/proxy-china/">中国大陆服务器代理</a></li>
+<li class=""><a href="https://example.com/distributed-cluster/environment-construction/">服务器环境搭建</a></li>
+</ul>
+  
+</li>
+
+<li class="parent"><a href="https://example.com/how-toad-ocr-work/">Toad Ocr 如何运作</a>
+  
+<ul class="sub-menu">
+<li class=""><a href="https://example.com/how-toad-ocr-work/persistence/">神经网络权重持久化与恢复</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/visualize/">图像可视化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/data-load/">数据集加载</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/zca/">对图像进行ZCA白化</a></li>
+<li class=""><a href="https://example.com/how-toad-ocr-work/cnn/">卷积神经网络</a></li>
+<li class="active"><a href="https://example.com/how-toad-ocr-work/snn/">脉冲神经网络</a></li>
+</ul>
+  
+</li>
+</ul>
+</nav>
+
+
+
+<div class="sidebar-footer"></div>
+</div>
+
+</div><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_SVG"></script>
+<script type="text/javascript">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$'], ['\\(','\\)']],
+    displayMath: [['$$','$$'], ['\[\[','\]\]']],
+    processEscapes: true,
+    processEnvironments: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+    TeX: { equationNumbers: { autoNumber: "AMS" },
+         extensions: ["AMSmath.js", "AMSsymbols.js"] }
+  }
+});
+</script>
+</div>
+</body>
+</html>
