@@ -32,7 +32,7 @@
 <meta itemprop="name" content="图像预处理服务部署">
 <meta itemprop="description" content="图像预处理服务部署 Toad Ocr Preprocessor Server 本章主要表述将Toad OCR Processor 图像处理module添加为集群中的RPC服务的方法。 ToadOCR分布式集群使用ETCD"><meta itemprop="datePublished" content="2021-05-08T16:55:24&#43;08:00" />
 <meta itemprop="dateModified" content="2021-05-08T16:55:24&#43;08:00" />
-<meta itemprop="wordCount" content="108"><meta itemprop="image" content="http://vjp.suvvm.work/images/og-image.png"/>
+<meta itemprop="wordCount" content="1165"><meta itemprop="image" content="http://vjp.suvvm.work/images/og-image.png"/>
 <meta itemprop="keywords" content="" /></head>
 <body><div class="container"><header>
 <h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
@@ -54,8 +54,143 @@
 <h1 id="图像预处理服务部署-toad-ocr-preprocessor-server">图像预处理服务部署 Toad Ocr Preprocessor Server</h1>
 <p>本章主要表述将Toad OCR Processor 图像处理module添加为集群中的RPC服务的方法。</p>
 <p>ToadOCR分布式集群使用ETCD进行搭建。所有操作的前提是完成本章目录下的环境搭建部分。</p>
-<h2 id="该部分等待郭一httpsgithubcombeyond-1234补充">该部分等待<a href="https://github.com/beyond-1234">@郭一</a>补充</h2>
-<div class="edit-meta">
+<h2 id="任务">任务</h2>
+<p>识别图像中的文字区域，并输出28×28的二值图供ToadOCREngine使用</p>
+<h2 id="识别文字区域前的准备">识别文字区域前的准备</h2>
+<h3 id="一二值化与形态学上的膨胀和腐蚀">一、二值化与形态学上的膨胀和腐蚀</h3>
+<ul>
+<li>二值化使得图像的像素值更单一、图像更简单。
+<ul>
+<li>二值化有三种常用操作</li>
+<li>简单阈值，选取一个全局阈值,所有像素与这个阈值作比较，然后就把整幅图像分成了非黑即白的二值图像</li>
+<li>自适应阈值，通过规定一个区域大小，比较这个点与区域大小里面像素点的平均值（或者其他特征）的大小关系确定这个像素点是属于黑或者白（如果是二值情况）</li>
+<li>Otsu’s二值化，此处不讨论</li>
+</ul>
+</li>
+<li>在黑底白字的情况下，膨胀即对前景做加粗处理，用于处理文字“缺陷”问题</li>
+<li>在黑底白字的情况下，腐蚀即对前景做减细处理，用于处理文字“毛刺”或“噪点”问题</li>
+<li>在白底黑字的情况下，腐蚀和膨胀对前景起到相反的效果</li>
+<li>开运算和闭运算
+<ul>
+<li>开运算：先腐蚀，再膨胀;闭运算：先膨胀，再腐蚀</li>
+<li>对于黑底白字的图像，开运算可以去掉无关的噪点;闭运算可以将文字缺陷的部分填充</li>
+</ul>
+</li>
+</ul>
+<h3 id="二图像处理">二、图像处理</h3>
+<ul>
+<li>1、将图像转为灰度图
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">CvtColor</span>(<span style="color:#a6e22e">originalMat</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">targetMat</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">ColorBGRToGray</span>)
+</code></pre></div></li>
+<li>2、对图像进行二值化处理，将图像变为白底黑字
+<ul>
+<li>这里使用自适应阈值</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">AdaptiveThreshold</span>(<span style="color:#a6e22e">originalMat</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">targetMat</span>, <span style="color:#ae81ff">225</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">AdaptiveThresholdGaussian</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">ThresholdBinary</span>, <span style="color:#ae81ff">31</span>, <span style="color:#ae81ff">16</span>)
+</code></pre></div></li>
+<li>3、对图像进行两次闭运算，以去掉噪点
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// 膨胀，去掉细节，前景是黑色的话，腐蚀操作会膨胀，膨胀操作会腐蚀
+</span><span style="color:#75715e"></span><span style="color:#a6e22e">dilation</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">NewMat</span>()
+<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">Dilate</span>(<span style="color:#a6e22e">targetMat</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">dilation</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">GetStructuringElement</span>(<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">MorphRect</span>, <span style="color:#a6e22e">image</span>.<span style="color:#a6e22e">Point</span>{<span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">4</span>}))
+<span style="color:#75715e">// 腐蚀，加粗轮廓，如表格线等。
+</span><span style="color:#75715e"></span><span style="color:#a6e22e">erosion</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">NewMat</span>()
+<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">Erode</span>(<span style="color:#a6e22e">dilation</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">erosion</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">GetStructuringElement</span>(<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">MorphRect</span>, <span style="color:#a6e22e">image</span>.<span style="color:#a6e22e">Point</span>{<span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">4</span>}))
+<span style="color:#75715e">// 再次膨胀，腐蚀细节
+</span><span style="color:#75715e"></span><span style="color:#a6e22e">dilation2</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">NewMat</span>()
+<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">Dilate</span>(<span style="color:#a6e22e">erosion</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">dilation2</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">GetStructuringElement</span>(<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">MorphRect</span>, <span style="color:#a6e22e">image</span>.<span style="color:#a6e22e">Point</span>{<span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">4</span>}))
+<span style="color:#75715e">// 腐蚀加粗轮廓
+</span><span style="color:#75715e"></span><span style="color:#a6e22e">erosion2</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">NewMat</span>()
+<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">Erode</span>(<span style="color:#a6e22e">dilation2</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">erosion2</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">GetStructuringElement</span>(<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">MorphRect</span>, <span style="color:#a6e22e">image</span>.<span style="color:#a6e22e">Point</span>{<span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">5</span>}))
+</code></pre></div></li>
+<li>4、再次进行二值化处理，不过本次是将图像转变为黑底白字
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">AdaptiveThreshold</span>(<span style="color:#a6e22e">erosion2</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">binary2</span>, <span style="color:#ae81ff">225</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">AdaptiveThresholdGaussian</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">ThresholdBinaryInv</span>, <span style="color:#ae81ff">31</span>, <span style="color:#ae81ff">16</span>)
+</code></pre></div></li>
+<li>5、对图像进行膨胀操作使文字轮廓凸显
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">dilation3</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">NewMat</span>()
+<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">Dilate</span>(<span style="color:#a6e22e">binary2</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">dilation3</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">GetStructuringElement</span>(<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">MorphRect</span>, <span style="color:#a6e22e">image</span>.<span style="color:#a6e22e">Point</span>{<span style="color:#ae81ff">12</span>,<span style="color:#ae81ff">12</span>}))
+</code></pre></div></li>
+</ul>
+<h3 id="三文字区域识别">三、文字区域识别</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">/// 识别文字区域
+</span><span style="color:#75715e">///
+</span><span style="color:#75715e">/// 入参
+</span><span style="color:#75715e">///	img gocv.Mat // 待识别的图像，要求黑底白字
+</span><span style="color:#75715e">/// 返回
+</span><span style="color:#75715e">///	[]image.Rectangle // 文字矩形区域的数组
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">findTextRegion</span>(<span style="color:#a6e22e">img</span> <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">Mat</span>) []<span style="color:#a6e22e">image</span>.<span style="color:#a6e22e">Rectangle</span> {
+    <span style="color:#75715e">// 查找轮廓
+</span><span style="color:#75715e"></span>    <span style="color:#a6e22e">rects</span> <span style="color:#f92672">:=</span> make([]<span style="color:#a6e22e">image</span>.<span style="color:#a6e22e">Rectangle</span>, <span style="color:#ae81ff">0</span>)
+    <span style="color:#a6e22e">contours</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">FindContours</span>(<span style="color:#a6e22e">img</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">RetrievalTree</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">ChainApproxSimple</span>)
+    <span style="color:#a6e22e">contoursSlice</span> <span style="color:#f92672">:=</span> make([]<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">PointVector</span>, <span style="color:#ae81ff">0</span>)
+    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">contours</span>.<span style="color:#a6e22e">Size</span>(); <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+	<span style="color:#a6e22e">cnt</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">contours</span>.<span style="color:#a6e22e">At</span>(<span style="color:#a6e22e">i</span>)
+
+	<span style="color:#a6e22e">contoursSlice</span> = append(<span style="color:#a6e22e">contoursSlice</span>, <span style="color:#a6e22e">cnt</span>)
+    }
+    <span style="color:#75715e">// 去掉重叠的识别不完整的区域
+</span><span style="color:#75715e"></span>    <span style="color:#a6e22e">rects</span> = <span style="color:#a6e22e">removeOverlappingRect</span>(<span style="color:#a6e22e">img</span>, <span style="color:#a6e22e">contoursSlice</span>)
+    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">rects</span>
+}
+<span style="color:#75715e">/// 去掉重叠的识别不完整的区域
+</span><span style="color:#75715e">///
+</span><span style="color:#75715e">/// 入参
+</span><span style="color:#75715e">///	img gocv.Mat // 待识别的图像
+</span><span style="color:#75715e">///	rects []gocv.PointVector // 识别出来的多边形的数组
+</span><span style="color:#75715e">/// 返回
+</span><span style="color:#75715e">///	[]image.Rectangle // 去重的文字矩形区域的数组
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">removeOverlappingRect</span>(<span style="color:#a6e22e">img</span> <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">Mat</span>, <span style="color:#a6e22e">rects</span> []<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">PointVector</span>) []<span style="color:#a6e22e">image</span>.<span style="color:#a6e22e">Rectangle</span> {
+
+    <span style="color:#a6e22e">sort</span>.<span style="color:#a6e22e">Slice</span>(<span style="color:#a6e22e">rects</span>, <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">i</span>, <span style="color:#a6e22e">j</span> <span style="color:#66d9ef">int</span>) <span style="color:#66d9ef">bool</span> {<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">ContourArea</span>(<span style="color:#a6e22e">rects</span>[<span style="color:#a6e22e">i</span>]) &gt; <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">ContourArea</span>(<span style="color:#a6e22e">rects</span>[<span style="color:#a6e22e">j</span>])})
+
+    <span style="color:#a6e22e">blankMat</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">Zeros</span>(<span style="color:#a6e22e">img</span>.<span style="color:#a6e22e">Rows</span>(), <span style="color:#a6e22e">img</span>.<span style="color:#a6e22e">Cols</span>(), <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">MatTypeCV8U</span>)
+    <span style="color:#a6e22e">newRects</span> <span style="color:#f92672">:=</span> make([]<span style="color:#a6e22e">image</span>.<span style="color:#a6e22e">Rectangle</span>, <span style="color:#ae81ff">0</span>)
+    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; len(<span style="color:#a6e22e">rects</span>); <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+	<span style="color:#a6e22e">polygon</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">MinAreaRect</span>(<span style="color:#a6e22e">rects</span>[<span style="color:#a6e22e">i</span>])
+	<span style="color:#a6e22e">region</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">blankMat</span>.<span style="color:#a6e22e">Region</span>(<span style="color:#a6e22e">polygon</span>.<span style="color:#a6e22e">BoundingRect</span>)
+
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">region</span>.<span style="color:#a6e22e">Mean</span>().<span style="color:#a6e22e">Val1</span> &gt; <span style="color:#ae81ff">0</span> {
+	    <span style="color:#66d9ef">continue</span>
+	}
+
+	<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">Rectangle</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">blankMat</span>, <span style="color:#a6e22e">polygon</span>.<span style="color:#a6e22e">BoundingRect</span>, <span style="color:#a6e22e">color</span>.<span style="color:#a6e22e">RGBA</span>{<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">255</span>, <span style="color:#ae81ff">255</span>, <span style="color:#ae81ff">255</span>}, int(<span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">Filled</span>))
+	<span style="color:#a6e22e">newRects</span> = append(<span style="color:#a6e22e">newRects</span>, <span style="color:#a6e22e">polygon</span>.<span style="color:#a6e22e">BoundingRect</span>)
+    }
+    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">newRects</span>
+}
+</code></pre></div><h3 id="四图像裁剪并压缩">四、图像裁剪并压缩</h3>
+<ul>
+<li>利用步骤三得到的矩形区域数组(rects)对原图像(img)进行裁剪，得到文字区域单独的图像</li>
+<li>对裁剪得到的图像进行二值化，转变为黑底白字的图像</li>
+<li>将图像大小压缩为28×28</li>
+<li>将图像转为byte数组</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">imageSet</span> <span style="color:#f92672">:=</span> make([][]<span style="color:#66d9ef">float64</span>, <span style="color:#ae81ff">0</span>)
+<span style="color:#75715e">// 裁剪
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">rect</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">rects</span> {
+    <span style="color:#a6e22e">img_region</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">img</span>.<span style="color:#a6e22e">Region</span>(<span style="color:#a6e22e">rect</span>)
+    <span style="color:#75715e">// 转为灰度图
+</span><span style="color:#75715e"></span>    <span style="color:#a6e22e">img_region</span> = <span style="color:#a6e22e">grayImage</span>(<span style="color:#a6e22e">img_region</span>)
+    <span style="color:#75715e">// 二值化
+</span><span style="color:#75715e"></span>    <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">AdaptiveThreshold</span>(<span style="color:#a6e22e">img_region</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">img_region</span>, <span style="color:#ae81ff">225</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">AdaptiveThresholdGaussian</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">ThresholdBinaryInv</span>, <span style="color:#ae81ff">31</span>, <span style="color:#ae81ff">16</span>)
+
+    <span style="color:#75715e">// 将图像压缩成28*28
+</span><span style="color:#75715e"></span>    <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">Resize</span>(<span style="color:#a6e22e">img_region</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">img_region</span>, <span style="color:#a6e22e">image</span>.<span style="color:#a6e22e">Point</span>{<span style="color:#ae81ff">28</span>, <span style="color:#ae81ff">28</span>}, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">gocv</span>.<span style="color:#a6e22e">InterpolationLinear</span>)
+
+    <span style="color:#a6e22e">imgFloat</span> <span style="color:#f92672">:=</span> make([]<span style="color:#66d9ef">float64</span>, <span style="color:#ae81ff">0</span>)
+    <span style="color:#a6e22e">imgBytes</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">img_region</span>.<span style="color:#a6e22e">ToBytes</span>()
+    <span style="color:#75715e">// 像素缩放
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">imgBytes</span> {
+	<span style="color:#a6e22e">imgFloat</span> = append(<span style="color:#a6e22e">imgFloat</span>, <span style="color:#a6e22e">PixelWeight</span>(<span style="color:#a6e22e">b</span>))
+    }
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;fail to DataPtrFloat32 %v&#34;</span>, <span style="color:#a6e22e">err</span>)
+	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+    }
+
+    <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;append imageSet&#34;</span>)
+    <span style="color:#a6e22e">imageSet</span> = append(<span style="color:#a6e22e">imageSet</span>, <span style="color:#a6e22e">imgFloat</span>)
+}
+</code></pre></div><div class="edit-meta">
 Last updated on 8 May 2021
 
 

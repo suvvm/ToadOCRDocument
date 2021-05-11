@@ -18,7 +18,7 @@
 :root {}
 </style>
 <meta property="og:title" content="服务器环境搭建" />
-<meta property="og:description" content="服务器环境搭建 Environment Construction ​ 本章主要介绍搭建集群与部署节点前的环境搭建步骤 该部分等待@郭一完善 一、Install ECTD 1、Ubnutu\Debian $ sudo" />
+<meta property="og:description" content="服务器环境搭建 Environment Construction ​ 本章主要介绍搭建集群与部署节点前的环境搭建步骤 一、Install ECTD 1、Ubnutu\Debian $ sudo apt-get install etcd 2、CentO" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="http://vjp.suvvm.work/distributed-cluster/environment-construction/" /><meta property="og:image" content="http://vjp.suvvm.work/images/og-image.png"/><meta property="article:section" content="distributed-cluster" />
 <meta property="article:published_time" content="2021-05-08T16:53:51&#43;08:00" />
@@ -28,11 +28,11 @@
 <meta name="twitter:image" content="http://vjp.suvvm.work/images/og-image.png"/>
 
 <meta name="twitter:title" content="服务器环境搭建"/>
-<meta name="twitter:description" content="服务器环境搭建 Environment Construction ​ 本章主要介绍搭建集群与部署节点前的环境搭建步骤 该部分等待@郭一完善 一、Install ECTD 1、Ubnutu\Debian $ sudo"/>
+<meta name="twitter:description" content="服务器环境搭建 Environment Construction ​ 本章主要介绍搭建集群与部署节点前的环境搭建步骤 一、Install ECTD 1、Ubnutu\Debian $ sudo apt-get install etcd 2、CentO"/>
 <meta itemprop="name" content="服务器环境搭建">
-<meta itemprop="description" content="服务器环境搭建 Environment Construction ​ 本章主要介绍搭建集群与部署节点前的环境搭建步骤 该部分等待@郭一完善 一、Install ECTD 1、Ubnutu\Debian $ sudo"><meta itemprop="datePublished" content="2021-05-08T16:53:51&#43;08:00" />
+<meta itemprop="description" content="服务器环境搭建 Environment Construction ​ 本章主要介绍搭建集群与部署节点前的环境搭建步骤 一、Install ECTD 1、Ubnutu\Debian $ sudo apt-get install etcd 2、CentO"><meta itemprop="datePublished" content="2021-05-08T16:53:51&#43;08:00" />
 <meta itemprop="dateModified" content="2021-05-08T16:53:51&#43;08:00" />
-<meta itemprop="wordCount" content="190"><meta itemprop="image" content="http://vjp.suvvm.work/images/og-image.png"/>
+<meta itemprop="wordCount" content="632"><meta itemprop="image" content="http://vjp.suvvm.work/images/og-image.png"/>
 <meta itemprop="keywords" content="" /></head>
 <body><div class="container"><header>
 <h1>Toad OCR</h1><a href="https://github.com/suvvm/ToadOCRDocument" class="github"><i class="fab fa-github"></i></a>
@@ -53,7 +53,6 @@
 <main><h1>服务器环境搭建</h1>
 <h1 id="服务器环境搭建-environment-construction">服务器环境搭建 Environment Construction</h1>
 <p>​	本章主要介绍搭建集群与部署节点前的环境搭建步骤</p>
-<h1 id="该部分等待郭一httpsgithubcombeyond-1234完善">该部分等待<a href="https://github.com/beyond-1234">@郭一</a>完善</h1>
 <h2 id="一install-ectd">一、Install ECTD</h2>
 <h3 id="1ubnutudebian">1、Ubnutu\Debian</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">$ sudo apt-get install etcd
@@ -66,20 +65,89 @@
 Git SHA: your git version
 Go Version: your go verson
 Go OS/Arch: linux/amd64
-</code></pre><h2 id="二install-opencv">二、Install OpenCV</h2>
-<h3 id="1ubnutudebian-1">1、Ubnutu\Debian</h3>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">
-</code></pre></div><h3 id="2centos-1">2、CentOS</h3>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">
-</code></pre></div><h3 id="3检查版本-1">3、检查版本</h3>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">
-</code></pre></div><h2 id="三install-golang">三、Install Golang</h2>
-<h3 id="1ubnutudebian-2">1、Ubnutu\Debian</h3>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">
-</code></pre></div><h3 id="2centos-2">2、CentOS</h3>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">
-</code></pre></div><h3 id="3检查版本-2">3、检查版本</h3>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">
+</code></pre><h2 id="二install-golang">二、Install Golang</h2>
+<h3 id="1linux">1、Linux</h3>
+<ul>
+<li>下载go二进制包，您可以去<a href="https://golang.org/doc/install">Go文档的安装页面</a>下载</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh"><span style="color:#75715e"># 您也可以使用wget</span>
+wget https://golang.org/dl/go1.15.11.linux-amd64.tar.gz
+</code></pre></div><ul>
+<li>进入下载目录并在终端中输入如下代码安装Go的二进制包</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh"><span style="color:#75715e"># 您需要root权限来执行下面的代码</span>
+rm -rf /usr/local/go <span style="color:#f92672">&amp;&amp;</span> tar -C /usr/local -xzf go1.16.4.linux-amd64.tar.gz
+</code></pre></div><ul>
+<li>配置环境变量，让go命令可以随处被访问</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh"><span style="color:#75715e"># 在配置文件中加入如下代码，例如Ubuntu/Debian下的~/.bashrc</span>
+export PATH<span style="color:#f92672">=</span>$PATH:/usr/local/go/bin
+</code></pre></div><ul>
+<li>您可以重启使环境变量生效，也可以使用<code>source</code>命令使之生效</li>
+</ul>
+<h3 id="2检查版本">2、检查版本</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">go version
+</code></pre></div><p>输出</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">go version go1.15.11 linux/amd64
+</code></pre></div><h2 id="三install-opencv-and-gocv">三、Install OpenCV and Gocv</h2>
+<h3 id="安装opencv可选">安装Opencv(可选)</h3>
+<h4 id="1源内安装">1、源内安装</h4>
+<p>源内安装的版本通常较老，若有需求可以手动安装</p>
+<ul>
+<li>Ubnutu\Debian</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">sudo apt install libopecv-dev
+</code></pre></div><ul>
+<li>CentOS</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">sudo yum install opencv opencv-devel
+</code></pre></div><h4 id="2手动编译安装核心模块">2、手动编译安装核心模块</h4>
+<ul>
+<li>
+<p>安装依赖 cmake g++ wget unzip</p>
+<ul>
+<li>Ubuntu/Debian:</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">sudo apt update <span style="color:#f92672">&amp;&amp;</span> sudo apt install -y cmake g++ wget unzip
+</code></pre></div><ul>
+<li>Centos:</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh"><span style="color:#75715e"># 注：Centos默认源内依赖版本可能较老，如有需要请更换源</span>
+sudo yum check-update <span style="color:#f92672">&amp;&amp;</span> sudo yum install gcc-c++ wget unzip
+</code></pre></div></li>
+<li>
+<p>下载源码并解压</p>
+</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">wget -O opencv.zip https://github.com/opencv/opencv/archive/master.zip
+unzip opencv.zip
+</code></pre></div><ul>
+<li>创建构建所需文件夹</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">mkdir -p build <span style="color:#f92672">&amp;&amp;</span> cd build
+</code></pre></div><ul>
+<li>配置</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cmake  ../opencv-master
+</code></pre></div><ul>
+<li>构建</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cmake --build .
+</code></pre></div><ul>
+<li>安装</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">sudo make install
+</code></pre></div><p>更多请移步<a href="https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html">opencv官方文档</a></p>
+<h3 id="安装gocv">安装Gocv</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">go get -u -d gocv.io/x/gocv
+</code></pre></div><p>如果您已安装好opencv,则可以跳过下面的内容；如果没有安装opencv,您可以编译安装gocv携带的opencv库</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cd $GOPATH/src/gocv.io/x/gocv
+make install
+</code></pre></div><p>您也可以将opencv编译安装为静态依赖</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">make install BUILD_SHARED_LIBS<span style="color:#f92672">=</span>OFF
+</code></pre></div><p>如果安装成功，在安装的最后会输出如下两行</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">gocv version: 0.27.0
+opencv lib version: 4.5.2
 </code></pre></div><div class="edit-meta">
 Last updated on 8 May 2021
 

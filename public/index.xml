@@ -75,7 +75,7 @@
       <pubDate>Sat, 08 May 2021 16:53:51 +0800</pubDate>
       
       <guid>http://vjp.suvvm.work/distributed-cluster/environment-construction/</guid>
-      <description>服务器环境搭建 Environment Construction ​ 本章主要介绍搭建集群与部署节点前的环境搭建步骤 该部分等待@郭一完善 一、Install ECTD 1、Ubnutu\Debian $ sudo</description>
+      <description>服务器环境搭建 Environment Construction ​ 本章主要介绍搭建集群与部署节点前的环境搭建步骤 一、Install ECTD 1、Ubnutu\Debian $ sudo apt-get install etcd 2、CentO</description>
     </item>
     
     <item>
