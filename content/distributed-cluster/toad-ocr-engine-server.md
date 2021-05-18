@@ -30,11 +30,13 @@ ToadOCR分布式集群使用ETCD进行搭建。所有操作的前提是完成本
 
   请求字段
 
+  - app_id string：调用方AppID身份信息
+  - basic_token string：调用方认证token
   - name string：ping 信息
 
   响应字段
 
-  - message string：pong信息
+  - message string：pong 信息
 
 - Predict
 
@@ -42,10 +44,12 @@ ToadOCR分布式集群使用ETCD进行搭建。所有操作的前提是完成本
 
   请求字段：
 
+  - app_id string：调用方AppID身份信息
+  - basic_token string：调用方认证token
   - net_flag string： 预测使用网络标志，默认值为“snn”代表脉冲神经网络，当其值被置为“cnn”时，将使用卷积神经网络进行预测。
-  - image []float64：图像数据，要求格式 28 * 28 黑底白字的灰度图，且图像像素以完成压缩（范围由0 ～ 255 压缩至 0.0～1.0）
+  - image []byte：图像数据，要求格式 28 * 28 黑底白字的灰度图，且图像像素以完成压缩（范围由0 ～ 255 压缩至 0.0～1.0）
 
-```
+```protobuf
 // Copyright 2015 gRPC authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,7 +82,9 @@ service ToadOcr {
 
 // The request message containing the user's name.
 message HelloRequest {
-  string name = 1;
+  string app_id = 1;
+  string basic_token = 2;
+  string name = 3;
 }
 
 // The response message containing the greetings
@@ -87,8 +93,10 @@ message HelloReply {
 }
 
 message PredictRequest {
-  string net_flag = 1;
-  repeated double image = 2;
+  string app_id = 1;
+  string basic_token = 2;
+  string net_flag = 3;
+  bytes image = 4;
 }
 
 message PredictReply {
@@ -96,7 +104,6 @@ message PredictReply {
   string message = 2;
   string label = 3;
 }
-
 ```
 
 ### 3、gRPC服务端代码生成
@@ -120,11 +127,30 @@ $ sed -i '' 's/SupportPackageIsVersion6/SupportPackageIsVersion4/g' rpc/idl/toad
 
 ### 4、handler设计
 
+- 身份验证
+
+  handler在拿到请求后会对调用方的身份进行校验，过程如下
+
+  1. 根据请求传入的appID，尝试获取调用方对应appSecret
+     - 在集群缓存的k-v中存在目标appID的键
+       - 获取对应k-v返回appSecret值
+     - 在集群缓存的k-v中不存在目标appID的键
+       - 在DB中根据appID获取appSecret
+       - 将appID - appSecret 缓存至集群中
+       - 返回appSecret值
+  2. 根据appSecret与请求数据内容进行MD5，得到hash串
+     - 将appSecret、请求中的参数数据组合成一串字符
+     - 对组合后的内容进行MD5编码
+  3. 验证MD5编码是否与basic_token一致
+     - 一致：继续进行下一步业务逻辑处理
+     - 不一致：构造拒绝响应并返回
+
 - SayHello
 
 ```go
 // SayHello implements helloworld.GreeterServer
 func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+  err := method.VerifySecret(ctx, in.AppId, in.BasicToken, in.Name)
 	log.Printf("Received: %v", in.GetName())
 	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
 }
@@ -136,6 +162,11 @@ func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 
 ```go
 func (s *Server) Predict(ctx context.Context, in *pb.PredictRequest) (*pb.PredictReply, error) {
+  err := method.VerifySecret(ctx, in.AppId, in.BasicToken, in.NetFlag + utils.PixelHashStr(in.Image))
+	if err != nil {
+		log.Printf("app:%v permission denied", in.AppId)
+		return &pb.PredictReply{Code: int32(*errorCode), Message: "permission denied", Label: *errorLab}, nil
+	}
 	log.Printf("Predict %v", in.NetFlag)
 	var lab string
 	var err error
@@ -157,7 +188,9 @@ func (s *Server) Predict(ctx context.Context, in *pb.PredictRequest) (*pb.Predic
 
 - 初始化
 
-  为了提高效率，ToadOCREngine服务端会长持两个神经网络，而不是每次收到请求后再尝试恢复它们
+  - 服务端在启动时会读取配置文件，初始化集群的client与DB链接
+  
+  - 为了提高效率，ToadOCREngine服务端会长持两个神经网络，而不是每次收到请求后再尝试恢复它们
 
 ```go
 func initNN() {
