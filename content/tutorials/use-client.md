@@ -50,7 +50,7 @@ draft: false
 
 ### 3、创建服务发现文件
 
-​	在rpc/toad_orc_processor_client目录下创建go文件 resolver.go并添加一下内容
+​	在rpc/toad_orc_processor_client目录下创建go文件 resolver.go并添加以下内容，服务注册与发现相见“分布式集群”部分
 
 ```go
 package rpc
