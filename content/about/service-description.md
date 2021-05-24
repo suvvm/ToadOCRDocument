@@ -220,9 +220,23 @@ draft: false
 
 ​	负责人: [@樊庆威](https://github.com/felixsfan)
 
-​	部署站点地址: 
+​	部署站点地址: http://49.234.42.199:8080/ocr_app/hello/
 
-## 等待[@樊庆威](https://github.com/felixsfan)补充
+​    ToadOCRClientService是ToadOCR服务为了项目的演示和给用户提供免费的调用服务客户端。页面采用传统的HTML、CSS、Javascript和bootstrap响应式框架搭建，后台程序使用Python的Django（web框架）。具体描述详见仓库 [readme](https://github.com/felixsfan/ToadOCRClientService/blob/master/README.md)
+
+- 构造和运行命令(详见[makefile](https://github.com/felixsfan/ToadOCRClientService/blob/master/Makefile.mk))
+
+  - 运行项目
+
+    ```sh
+    $ make run
+    ```
+
+  - 清除清除日志和运行产生的文件
+
+    ```sh
+    $ make clean
+    ```
 
 ## 五、ToadOCRDocument
 
