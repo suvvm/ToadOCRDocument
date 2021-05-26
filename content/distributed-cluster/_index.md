@@ -15,6 +15,7 @@ draft: false
 - [服务器环境搭建](environment-construction/)
 - [中国大陆服务器代理](proxy-china)
 - [集群搭建](cluster-construction/)
+- [服务注册与发现](etcd-register-resolver/)
 - [OCR识别服务节点部署](toad-ocr-engine-server/)
 - [图像预处理服务节点部署](toad-ocr-preprocessor-server/)
 - [缓存与持久化](cache-and-persistence/)

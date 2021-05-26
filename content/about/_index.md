@@ -14,7 +14,8 @@ weight: 3
 
 - [ToadOCREngine](https://github.com/suvvm/ToadOCREngine)
 - [ToadOCRPreprocessor](https://github.com/suvvm/ToadOCRPreprocessor)
-- [ToadOCRTools]()
+- [ToadOCRRpcClient](https://github.com/suvvm/ToadOCRRpcClient)
+- [ToadOCRTools](https://github.com/suvvm/ToadOCRTools)
 - [ToadOCRClientService](https://github.com/felixsfan/ToadOCRClientService)
 - [ToadOCRDocument](https://github.com/suvvm/ToadOCRDocument)
 

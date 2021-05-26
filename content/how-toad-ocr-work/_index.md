@@ -13,6 +13,7 @@ draft: false
 - [数据集load](data-load/)
 - [图像可视化](visualize/)
 - [图像的ZCA白化](zca/)
+- [OpenCV图像处理](opencv_imgaes_processor/)
 - [权重持久化与恢复](persistence/)
 - [前馈型脉冲神经网络](snn/)
 - [卷积神经网络](cnn/)
