@@ -164,7 +164,23 @@ draft: false
       $ ./toad_ocr_preprocessor client
       ```
 
-## 三、ToadOCRTools
+## 三、ToadOCRRpcClient
+
+​	仓库地址 [https://github.com/suvvm/ToadOCRRpcClient](https://github.com/suvvm/ToadOCRRpcClient)
+
+​	负责人: [@李亚宁](https://github.com/suvvm)
+
+​	ToadOCRRpcClient是ToadOCR PRC服务体系的客户端，其提供对ToadOCREngine与ToadOCRPreprocessor服务的调用方式，使得新服务可以快速接入ToadOCR PRC服务体系。
+
+- 获取方式
+
+  ```sh
+   go get github.com/suvvm/ToadOCRRpcClient
+  ```
+
+
+
+## 四、ToadOCRTools
 
 ​	仓库地址 [https://github.com/suvvm/ToadOCRTools](https://github.com/suvvm/ToadOCRTools)
 
@@ -214,13 +230,13 @@ draft: false
     $ ./toad_ocr_tools
     ```
 
-## 四、ToadOCRClientService
+## 五、ToadOCRClientService
 
 ​	仓库地址 [https://github.com/felixsfan/ToadOCRClientService](https://github.com/felixsfan/ToadOCRClientService)
 
 ​	负责人: [@樊庆威](https://github.com/felixsfan)
 
-​	部署站点地址: http://49.234.42.199:8080/ocr_app/hello/
+​	部署站点地址: http://fqw.suvvm.work:8080/ocr_app/hello/
 
 ​    ToadOCRClientService是ToadOCR服务为了项目的演示和给用户提供免费的调用服务客户端。页面采用传统的HTML、CSS、Javascript和bootstrap响应式框架搭建，后台程序使用Python的Django（web框架）。具体描述详见仓库 [readme](https://github.com/felixsfan/ToadOCRClientService/blob/master/README.md)
 
@@ -238,7 +254,7 @@ draft: false
     $ make clean
     ```
 
-## 五、ToadOCRDocument
+## 六、ToadOCRDocument
 
 ​	仓库地址 [https://github.com/suvvm/ToadOCRDocument](https://github.com/suvvm/ToadOCRDocument)
 
